@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
+use App\Models\Consulta;
 
 class PagoController extends Controller
 {
@@ -16,8 +17,31 @@ class PagoController extends Controller
                 env('MP_ACCESS_TOKEN')
             );
 
+            $request->validate([
+
+                'tipo' => 'required|string',
+                'monto' => 'required|numeric'
+
+            ]);
+
             $tipo = $request->tipo;
             $monto = (float) $request->monto;
+
+            // Generar referencia única
+
+            $externalReference = uniqid();
+
+            // Crear consulta
+
+            $consulta = Consulta::create([
+
+                'tipo' => $tipo,
+                'monto' => $monto,
+                'estado' => 'pendiente_pago',
+                'metodo_pago' => 'mercadopago',
+                'external_reference' => $externalReference
+
+            ]);
 
             $client = new PreferenceClient();
 
@@ -36,7 +60,7 @@ class PagoController extends Controller
                     "email" => "test_user@testuser.com"
                 ],
 
-                "external_reference" => uniqid(),
+                "external_reference" => $externalReference,
 
                 "back_urls" => [
                     "success" => "app-medica://confirmacion",
@@ -51,13 +75,11 @@ class PagoController extends Controller
             return response()->json([
                 "init_point" => $preference->init_point
             ]);
-
         } catch (\Exception $e) {
 
             return response()->json([
                 "error" => $e->getMessage()
             ], 500);
-
         }
     }
 }
