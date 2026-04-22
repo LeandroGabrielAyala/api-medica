@@ -63,9 +63,9 @@ class PagoController extends Controller
                 "external_reference" => $externalReference,
 
                 "back_urls" => [
-                    "success" => "app-medica://confirmacion",
-                    "failure" => "app-medica://confirmacion",
-                    "pending" => "app-medica://confirmacion"
+                    "success" => "exp://192.168.100.4:8081/--/confirmacion",
+                    "failure" => "exp://192.168.100.4:8081/--/confirmacion",
+                    "pending" => "exp://192.168.100.4:8081/--/confirmacion"
                 ],
 
                 "auto_return" => "approved"
