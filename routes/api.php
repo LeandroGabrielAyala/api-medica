@@ -22,7 +22,6 @@ Route::get('/mp/redirect', function () {
     return redirect(
         "app-medica://confirmacion?status={$status}"
     );
-
 });
 
 Route::post(
@@ -33,4 +32,9 @@ Route::post(
 Route::get(
     '/consultas',
     [PagoController::class, 'listarConsultas']
+);
+
+Route::post(
+    '/consultas/{id}/atender',
+    [PagoController::class, 'marcarAtendido']
 );

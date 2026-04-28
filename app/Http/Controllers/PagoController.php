@@ -66,9 +66,9 @@ class PagoController extends Controller
                 "notification_url" => env('MP_WEBHOOK_URL'),
 
                 "back_urls" => [
-                    "success" => "exp://192.168.203.139:8081/--/confirmacion",
-                    "failure" => "exp://192.168.203.139:8081/--/confirmacion",
-                    "pending" => "exp://192.168.203.139:8081/--/confirmacion"
+                    "success" => "exp://192.168.100.4:8081/--/confirmacion",
+                    "failure" => "exp://192.168.100.4:8081/--/confirmacion",
+                    "pending" => "exp://192.168.100.4:8081/--/confirmacion"
                 ],
 
                 "auto_return" => "approved"
@@ -77,6 +77,31 @@ class PagoController extends Controller
 
             return response()->json([
                 "init_point" => $preference->init_point
+            ]);
+        } catch (\Exception $e) {
+
+            return response()->json([
+                "error" => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function marcarAtendido($id)
+    {
+        try {
+
+            $consulta = Consulta::find($id);
+
+            if ($consulta) {
+
+                $consulta->estado =
+                    "atendido";
+
+                $consulta->save();
+            }
+
+            return response()->json([
+                "status" => "ok"
             ]);
         } catch (\Exception $e) {
 
