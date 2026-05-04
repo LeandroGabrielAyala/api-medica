@@ -69,9 +69,9 @@ class PagoController extends Controller
                 "notification_url" => env('MP_WEBHOOK_URL'),
 
                 "back_urls" => [
-                    "success" => "exp://192.168.203.139:8081/--/confirmacion",
-                    "failure" => "exp://192.168.203.139:8081/--/confirmacion",
-                    "pending" => "exp://192.168.203.139:8081/--/confirmacion"
+                    "success" => env('MP_REDIRECT_URL'),
+                    "failure" => env('MP_REDIRECT_URL'),
+                    "pending" => env('MP_REDIRECT_URL')
                 ],
 
                 "auto_return" => "approved"
@@ -285,16 +285,18 @@ class PagoController extends Controller
 
     public function guardarToken(Request $request)
     {
+        Log::info("TOKEN REQUEST:", $request->all()); // 🔥 DEBUG
 
-        $user = User::where(
-            'role',
-            'medico'
-        )->first();
+        if (!$request->token || !$request->user_id) {
+            return response()->json(["success" => false]);
+        }
 
-        $user->push_token =
-            $request->token;
+        $user = User::find($request->user_id);
 
-        $user->save();
+        if ($user) {
+            $user->push_token = $request->token;
+            $user->save();
+        }
 
         return response()->json([
             "success" => true

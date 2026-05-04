@@ -14,14 +14,10 @@ return new class extends Migration
         Schema::create('notifications', function (Blueprint $table) {
 
             $table->id();
-
             $table->string('title');
-
             $table->text('message');
-
             $table->boolean('read')
                 ->default(false);
-
             $table->timestamps();
         });
     }
