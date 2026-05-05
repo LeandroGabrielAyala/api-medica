@@ -22,35 +22,29 @@ class PagoController extends Controller
             );
 
             $request->validate([
-
                 'tipo' => 'required|string',
-                'monto' => 'required|numeric'
-
+                'monto' => 'required|numeric',
+                'user_id' => 'required|exists:users,id', // 🔥 VALIDACIÓN IMPORTANTE
             ]);
 
             $tipo = $request->tipo;
             $monto = (float) $request->monto;
 
-            // Generar referencia única
-
             $externalReference = uniqid();
 
-            // Crear consulta
-
+            // 🔥 Crear consulta con usuario
             $consulta = Consulta::create([
-
+                'user_id' => $request->user_id,
                 'tipo' => $tipo,
                 'monto' => $monto,
                 'estado' => 'pendiente_pago',
                 'metodo_pago' => 'mercadopago',
                 'external_reference' => $externalReference,
-
             ]);
 
             $client = new PreferenceClient();
 
             $preference = $client->create([
-
                 "items" => [
                     [
                         "title" => $tipo,
@@ -59,23 +53,17 @@ class PagoController extends Controller
                         "currency_id" => "ARS"
                     ]
                 ],
-
                 "payer" => [
                     "email" => "test_user@testuser.com"
                 ],
-
                 "external_reference" => $externalReference,
-
                 "notification_url" => env('MP_WEBHOOK_URL'),
-
                 "back_urls" => [
                     "success" => env('MP_REDIRECT_URL'),
                     "failure" => env('MP_REDIRECT_URL'),
                     "pending" => env('MP_REDIRECT_URL')
                 ],
-
                 "auto_return" => "approved"
-
             ]);
 
             return response()->json([
@@ -96,10 +84,7 @@ class PagoController extends Controller
             $consulta = Consulta::find($id);
 
             if ($consulta) {
-
-                $consulta->estado =
-                    "atendido";
-
+                $consulta->estado = "atendido";
                 $consulta->save();
             }
 
@@ -120,8 +105,6 @@ class PagoController extends Controller
 
             $data = $request->all();
 
-            // Log para debug
-
             Log::info("Webhook MP:", $data);
 
             if (isset($data['data']['id'])) {
@@ -136,8 +119,7 @@ class PagoController extends Controller
 
                 $payment = $client->get($paymentId);
 
-                $externalReference =
-                    $payment->external_reference;
+                $externalReference = $payment->external_reference;
 
                 if ($payment->status === "approved") {
 
@@ -149,21 +131,15 @@ class PagoController extends Controller
                     if ($consulta) {
 
                         $consulta->estado = "pagado";
-
                         $consulta->fecha_pago = now();
-
                         $consulta->save();
 
-                        // 🔔 Crear notificación
-
+                        // 🔔 Notificación
                         Notification::create([
-
                             'title' => 'Nueva consulta pagada',
-
                             'message' =>
                             'Se recibió una ' .
                                 $consulta->tipo .
-
                                 ' por $' .
                                 number_format(
                                     $consulta->monto,
@@ -172,32 +148,18 @@ class PagoController extends Controller
                                     '.'
                                 ),
                             'read' => false
-
                         ]);
 
-                        // 📲 Enviar Push Notification
-
-                        $user = User::where(
-                            'role',
-                            'medico'
-                        )->first();
+                        // 📲 Push (opcional)
+                        $user = User::where('role', 'medico')->first();
 
                         if ($user && $user->push_token) {
-
                             Http::post(
                                 'https://exp.host/--/api/v2/push/send',
                                 [
-
-                                    'to' =>
-                                    $user->push_token,
-
-                                    'title' =>
-                                    'Nueva consulta',
-
-                                    'body' =>
-                                    'Se recibió una ' .
-                                        $consulta->tipo,
-
+                                    'to' => $user->push_token,
+                                    'title' => 'Nueva consulta',
+                                    'body' => 'Se recibió una ' . $consulta->tipo,
                                 ]
                             );
                         }
@@ -222,20 +184,13 @@ class PagoController extends Controller
     {
         try {
 
-            $consultas = Consulta::where(
-                'estado',
-                '!=',
-                'pendiente_pago'
-            )
-                ->orderBy(
-                    'created_at',
-                    'desc'
-                )
+            // 🔥 IMPORTANTE: traer usuario
+            $consultas = Consulta::with('user')
+                ->where('estado', '!=', 'pendiente_pago')
+                ->orderBy('created_at', 'desc')
                 ->get();
 
-            return response()->json(
-                $consultas
-            );
+            return response()->json($consultas);
         } catch (\Exception $e) {
 
             return response()->json([
@@ -246,37 +201,22 @@ class PagoController extends Controller
 
     public function listarNotificaciones()
     {
-
         return response()->json(
-
-            Notification::orderBy(
-                'created_at',
-                'desc'
-            )->get()
-
+            Notification::orderBy('created_at', 'desc')->get()
         );
     }
 
     public function contarNotificaciones()
     {
         return response()->json([
-
-            "total" => \App\Models\Notification::where(
-                'read',
-                false
-            )->count()
-
+            "total" => Notification::where('read', false)->count()
         ]);
     }
 
     public function marcarNotificacionesLeidas()
     {
-        \App\Models\Notification::where(
-            'read',
-            false
-        )->update([
-            'read' => true
-        ]);
+        Notification::where('read', false)
+            ->update(['read' => true]);
 
         return response()->json([
             "success" => true
@@ -285,7 +225,7 @@ class PagoController extends Controller
 
     public function guardarToken(Request $request)
     {
-        Log::info("TOKEN REQUEST:", $request->all()); // 🔥 DEBUG
+        Log::info("TOKEN REQUEST:", $request->all());
 
         if (!$request->token || !$request->user_id) {
             return response()->json(["success" => false]);

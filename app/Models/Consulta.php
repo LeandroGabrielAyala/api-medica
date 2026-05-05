@@ -16,4 +16,9 @@ class Consulta extends Model
         'fecha_pago'
 
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
