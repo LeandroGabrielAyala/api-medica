@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PagoController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\MedicamentoController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -44,3 +45,27 @@ Route::get('/notificaciones/count', [PagoController::class, 'contarNotificacione
 Route::post('/notificaciones/read', [PagoController::class, 'marcarNotificacionesLeidas']);
 
 Route::post('/guardar-token', [PagoController::class, 'guardarToken']);
+
+
+// 📦 medicamentos disponibles
+Route::get('/medicamentos', [MedicamentoController::class, 'index']);
+
+// 📝 solicitudes paciente
+Route::get('/mis-medicamentos/{user_id}', [MedicamentoController::class, 'misSolicitudes']);
+
+// ➕ solicitar medicamento
+Route::post('/medicamentos/solicitar', [MedicamentoController::class, 'solicitar']);
+
+// 👨‍⚕️ acciones médico
+Route::post('/medicamentos/{id}/aprobar', [MedicamentoController::class, 'aprobar']);
+Route::post('/medicamentos/{id}/rechazar', [MedicamentoController::class, 'rechazar']);
+Route::post('/medicamentos/{id}/entregar', [MedicamentoController::class, 'entregar']);
+
+// 📋 todas las solicitudes (panel médico)
+Route::get('/medicamentos-solicitudes', [MedicamentoController::class, 'todasSolicitudes']);
+
+// ➕ crear medicamento
+Route::post('/medicamentos', [MedicamentoController::class, 'store']);
+
+// actualizar stock
+Route::put('/medicamentos/{id}', [MedicamentoController::class, 'update']);
