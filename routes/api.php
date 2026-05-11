@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PagoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MedicamentoController;
+use App\Http\Controllers\EstudioController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -69,3 +70,13 @@ Route::post('/medicamentos', [MedicamentoController::class, 'store']);
 
 // actualizar stock
 Route::put('/medicamentos/{id}', [MedicamentoController::class, 'update']);
+
+
+// 🧪 ESTUDIOS
+
+Route::get('/mis-estudios/{user_id}', [EstudioController::class, 'misEstudios']);
+Route::post('/estudios', [EstudioController::class, 'store']);
+Route::get('/estudios', [EstudioController::class, 'index']);
+Route::post('/estudios/{id}/estado', [EstudioController::class, 'estado']);
+Route::post('/estudios/{id}/resultado', [EstudioController::class, 'subirResultado']);
+Route::get('/estudios/{id}', [EstudioController::class, 'show']);
