@@ -5,6 +5,7 @@ use App\Http\Controllers\PagoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MedicamentoController;
 use App\Http\Controllers\EstudioController;
+use App\Http\Controllers\RecetaController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -34,17 +35,11 @@ Route::get('/confirmacion', function () {
 });
 
 Route::post('/mp/webhook', [PagoController::class, 'webhook']);
-
 Route::get('/consultas', [PagoController::class, 'listarConsultas']);
-
 Route::post('/consultas/{id}/atender', [PagoController::class, 'marcarAtendido']);
-
 Route::get('/notificaciones', [PagoController::class, 'listarNotificaciones']);
-
 Route::get('/notificaciones/count', [PagoController::class, 'contarNotificaciones']);
-
 Route::post('/notificaciones/read', [PagoController::class, 'marcarNotificacionesLeidas']);
-
 Route::post('/guardar-token', [PagoController::class, 'guardarToken']);
 
 
@@ -73,10 +68,17 @@ Route::put('/medicamentos/{id}', [MedicamentoController::class, 'update']);
 
 
 // 🧪 ESTUDIOS
-
 Route::get('/mis-estudios/{user_id}', [EstudioController::class, 'misEstudios']);
 Route::post('/estudios', [EstudioController::class, 'store']);
 Route::get('/estudios', [EstudioController::class, 'index']);
 Route::post('/estudios/{id}/estado', [EstudioController::class, 'estado']);
 Route::post('/estudios/{id}/resultado', [EstudioController::class, 'subirResultado']);
 Route::get('/estudios/{id}', [EstudioController::class, 'show']);
+
+
+// 🧾 RECETAS
+Route::get('/mis-recetas/{user_id}', [RecetaController::class, 'misRecetas']);
+Route::get('/recetas', [RecetaController::class, 'index']);
+Route::post('/recetas', [RecetaController::class, 'store']);
+Route::get('/recetas/{id}', [RecetaController::class, 'show']);
+Route::post('/recetas/{id}/archivo', [RecetaController::class, 'subirArchivo']);
