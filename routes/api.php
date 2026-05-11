@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MedicamentoController;
 use App\Http\Controllers\EstudioController;
 use App\Http\Controllers\RecetaController;
+use App\Http\Controllers\CertificadoController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -82,3 +83,10 @@ Route::get('/recetas', [RecetaController::class, 'index']);
 Route::post('/recetas', [RecetaController::class, 'store']);
 Route::get('/recetas/{id}', [RecetaController::class, 'show']);
 Route::post('/recetas/{id}/archivo', [RecetaController::class, 'subirArchivo']);
+
+// CERTIFICADOS
+Route::get('/mis-certificados/{user_id}', [CertificadoController::class, 'misCertificados']);
+Route::get('/certificados', [CertificadoController::class, 'index']);
+Route::post('/certificados', [CertificadoController::class, 'store']);
+Route::get('/certificados/{id}', [CertificadoController::class, 'show']);
+Route::post('/certificados/{id}/archivo', [CertificadoController::class, 'subirArchivo']);
