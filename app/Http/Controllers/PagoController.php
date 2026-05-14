@@ -6,12 +6,12 @@ use Illuminate\Http\Request;
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
 use App\Models\Consulta;
-use Illuminate\Support\Facades\Log;
 use App\Models\Notification;
-use Illuminate\Support\Facades\Http;
-use App\Models\User;
-use Illuminate\Support\Str;
 use App\Models\Pago;
+use App\Models\User;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class PagoController extends Controller
 {
@@ -24,73 +24,118 @@ class PagoController extends Controller
             );
 
             $request->validate([
+
                 'tipo' => 'required|string',
                 'monto' => 'required|numeric',
-                'user_id' => 'required|exists:users,id', // 🔥 VALIDACIÓN IMPORTANTE
+                'user_id' => 'required|exists:users,id',
             ]);
 
             $tipo = $request->tipo;
             $monto = (float) $request->monto;
             $user = User::find($request->user_id);
-
-            $externalReference = Str::uuid()->toString();
-
+            $externalReference =
+                Str::uuid()->toString();
             $pago = Pago::create([
-                'user_id' => $request->user_id,
-                'modulo' => $request->tipo,
-                'monto' => $monto,
-                'estado' => 'pendiente',
-                'external_reference' => $externalReference,
+                'user_id' =>
+                $request->user_id,
+                'modulo' =>
+                $request->tipo,
+                'monto' =>
+                $monto,
+                'estado' =>
+                'pendiente',
+                'external_reference' =>
+                $externalReference,
+                'metadata' =>
+                $request->metadata ?? [],
             ]);
 
-            $client = new PreferenceClient();
+            $client =
+                new PreferenceClient();
 
-            $preference = $client->create([
+            $preference =
+                $client->create([
 
-                "items" => [
-                    [
-                        "title" => $tipo,
-                        "quantity" => 1,
-                        "unit_price" => $monto,
-                        "currency_id" => "ARS"
-                    ]
-                ],
+                    "items" => [
+                        [
+                            "title" =>
+                            ucfirst($tipo),
 
-                "payer" => [
-                    "email" => $user->email
-                ],
+                            "quantity" => (int) 1,
 
-                "external_reference" => $pago->external_reference,
+                            "unit_price" =>
+                            (float) $monto,
 
-                "notification_url" => env('MP_WEBHOOK_URL'),
+                            "currency_id" =>
+                            "ARS"
+                        ]
+                    ],
 
-                "back_urls" => [
-                    "success" => env('MP_SUCCESS_URL'),
-                    "failure" => env('MP_FAILURE_URL'),
-                    "pending" => env('MP_PENDING_URL')
-                ],
+                    "payer" => [
+                        "email" =>
+                        $user->email
+                    ],
 
-                "auto_return" => "approved"
+                    "external_reference" =>
+                    $pago->external_reference,
 
-            ]);
+                    // "notification_url" =>
+                    // env('MP_WEBHOOK_URL'),
+
+                    "back_urls" => [
+
+                        "success" =>
+                        env('MP_SUCCESS_URL'),
+
+                        "failure" =>
+                        env('MP_FAILURE_URL'),
+
+                        "pending" =>
+                        env('MP_PENDING_URL')
+
+                    ],
+
+                    "auto_return" =>
+                    "approved"
+
+                ]);
 
             $pago->update([
-                'metadata' => [
-                    'mp_preference_id' => $preference->id
-                ]
+
+                'metadata' => array_merge(
+
+                    $pago->metadata ?? [],
+
+                    [
+                        'mp_preference_id' =>
+                        $preference->id
+                    ]
+
+                )
+
             ]);
 
             return response()->json([
 
-                "init_point" => $preference->init_point,
+                "init_point" =>
+                $preference->init_point,
 
-                "external_reference" => $externalReference
+                "external_reference" =>
+                $externalReference
 
             ]);
         } catch (\Exception $e) {
 
+            Log::error($e);
+
             return response()->json([
-                "error" => $e->getMessage()
+
+                "error" => $e->getMessage(),
+
+                "line" => $e->getLine(),
+
+                "file" => $e->getFile(),
+
             ], 500);
         }
     }
@@ -116,10 +161,14 @@ class PagoController extends Controller
     {
         try {
 
-            $consulta = Consulta::find($id);
+            $consulta =
+                Consulta::find($id);
 
             if ($consulta) {
-                $consulta->estado = "atendido";
+
+                $consulta->estado =
+                    "atendido";
+
                 $consulta->save();
             }
 
@@ -128,122 +177,176 @@ class PagoController extends Controller
             ]);
         } catch (\Exception $e) {
 
+            Log::error($e);
+
             return response()->json([
-                "error" => $e->getMessage()
+
+                "error" => $e->getMessage(),
+
+                "line" => $e->getLine(),
+
+                "file" => $e->getFile(),
+
             ], 500);
         }
     }
 
-    public function webhook(Request $request)
-    {
-        try {
+    // public function webhook(Request $request)
+    // {
+    //     try {
 
-            $data = $request->all();
+    //         $data = $request->all();
 
-            Log::info("Webhook MP:", $data);
+    //         Log::info(
+    //             "Webhook MP:",
+    //             $data
+    //         );
 
-            if (isset($data['data']['id'])) {
+    //         if (isset($data['data']['id'])) {
 
-                $paymentId = $data['data']['id'];
+    //             $paymentId =
+    //                 $data['data']['id'];
 
-                MercadoPagoConfig::setAccessToken(
-                    env('MP_ACCESS_TOKEN')
-                );
+    //             MercadoPagoConfig::setAccessToken(
+    //                 env('MP_ACCESS_TOKEN')
+    //             );
 
-                $client = new \MercadoPago\Client\Payment\PaymentClient();
+    //             $client = new \MercadoPago\Client\Payment\PaymentClient();
 
-                // $payment = $client->get($paymentId);
-                $payment = new \stdClass();
-                $payment->status = "approved";
-                $payment->external_reference =
-                    $data['external_reference'] ?? null;
+    //             // 🔥 LOCAL
+    //             // $payment = $client->get($paymentId);
+    //             $payment = $client->get($paymentId);
 
-                $externalReference = $payment->external_reference;
+    //             $externalReference =
+    //                 $payment->external_reference;
 
-                if ($payment->status === "approved") {
+    //             if (
+    //                 $payment->status === "approved"
+    //             ) {
 
-                    $pago = Pago::where(
-                        'external_reference',
-                        $externalReference
-                    )->first();
+    //                 $pago = Pago::where(
+    //                     'external_reference',
+    //                     $externalReference
+    //                 )->first();
 
-                    if ($pago) {
+    //                 if ($pago) {
 
-                        // ✅ EVITAR DUPLICADOS
-                        if ($pago->estado === "pagado") {
+    //                     // ✅ evitar duplicados
+    //                     if (
+    //                         $pago->estado === "pagado"
+    //                     ) {
 
-                            return response()->json([
-                                "status" => "ya procesado"
-                            ]);
-                        }
+    //                         return response()->json([
+    //                             "status" =>
+    //                             "ya procesado"
+    //                         ]);
+    //                     }
 
-                        $pago->estado = "pagado";
-                        $pago->fecha_pago = now();
-                        $pago->mp_payment_id = $paymentId;
-                        $pago->save();
+    //                     $pago->estado =
+    //                         "pagado";
 
-                        Log::info("PAGO APROBADO", [
-                            'pago_id' => $pago->id,
-                            'modulo' => $pago->modulo,
-                            'monto' => $pago->monto
-                        ]);
+    //                     $pago->fecha_pago =
+    //                         now();
 
-                        Consulta::create([
-                            'user_id' => $pago->user_id,
-                            'tipo' => $pago->modulo,
-                            'monto' => $pago->monto,
-                            'estado' => 'pagado',
-                            'metodo_pago' => 'mercadopago',
-                            'external_reference' => $pago->external_reference,
-                            'fecha_pago' => now(),
-                        ]);
+    //                     $pago->mp_payment_id =
+    //                         $paymentId;
 
-                        // 🔔 Notificación
-                        Notification::create([
-                            'title' => 'Nuevo pago aprobado',
-                            'message' =>
-                            'Se recibió un pago de ' .
-                                $pago->modulo .
-                                ' por $' .
-                                number_format(
-                                    $pago->monto,
-                                    2,
-                                    ',',
-                                    '.'
-                                ),
+    //                     $pago->save();
 
-                            'read' => false
-                        ]);
+    //                     Log::info(
+    //                         "PAGO APROBADO",
+    //                         [
 
-                        // 📲 Push (opcional)
-                        $user = User::where('role', 'medico')->first();
+    //                             'pago_id' =>
+    //                             $pago->id,
 
-                        if ($user && $user->push_token) {
-                            Http::post(
-                                'https://exp.host/--/api/v2/push/send',
-                                [
-                                    'to' => $user->push_token,
-                                    'title' => 'Nueva consulta',
-                                    'body' => 'Nuevo pago aprobado: ' . $pago->modulo,
-                                ]
-                            );
-                        }
-                    }
-                }
-            }
+    //                             'modulo' =>
+    //                             $pago->modulo,
 
-            return response()->json([
-                "status" => "ok"
-            ]);
-        } catch (\Exception $e) {
+    //                             'monto' =>
+    //                             $pago->monto
 
-            Log::error($e->getMessage());
+    //                         ]
+    //                     );
 
-            return response()->json([
-                "error" => $e->getMessage()
-            ], 500);
-        }
-    }
+    //                     // ✅ PROCESAR MÓDULO
+    //                     $this->procesarModulo($pago);
+
+    //                     // 🔔 NOTIFICACIÓN
+    //                     Notification::create([
+
+    //                         'title' =>
+    //                         'Nuevo pago aprobado',
+
+    //                         'message' =>
+    //                         'Se recibió un pago de ' .
+    //                             strtoupper($pago->modulo) .
+    //                             ' por $' .
+    //                             number_format(
+    //                                 $pago->monto,
+    //                                 2,
+    //                                 ',',
+    //                                 '.'
+    //                             ),
+
+    //                         'read' => false,
+
+    //                     ]);
+
+    //                     // 📲 PUSH
+    //                     $user = User::where(
+    //                         'role',
+    //                         'medico'
+    //                     )->first();
+
+    //                     if (
+    //                         $user &&
+    //                         $user->push_token
+    //                     ) {
+
+    //                         Http::post(
+    //                             'https://exp.host/--/api/v2/push/send',
+    //                             [
+
+    //                                 'to' =>
+    //                                 $user->push_token,
+
+    //                                 'title' =>
+    //                                 'Nueva consulta',
+
+    //                                 'body' =>
+    //                                 'Nuevo pago aprobado: ' .
+    //                                     $pago->modulo,
+
+    //                             ]
+    //                         );
+    //                     }
+    //                 }
+    //             }
+    //         }
+
+    //         return response()->json([
+    //             "status" => "ok"
+    //         ]);
+    //     } catch (\Exception $e) {
+
+    //         Log::error(
+    //             $e->getMessage()
+    //         );
+
+    //         Log::error($e);
+
+    //         return response()->json([
+
+    //             "error" => $e->getMessage(),
+
+    //             "line" => $e->getLine(),
+
+    //             "file" => $e->getFile(),
+
+    //         ], 500);
+    //     }
+    // }
 
     public function simularPago(Request $request)
     {
@@ -257,65 +360,62 @@ class PagoController extends Controller
             if (!$pago) {
 
                 return response()->json([
-                    "error" => "Pago no encontrado"
+                    "error" =>
+                    "Pago no encontrado"
                 ], 404);
             }
 
-            // ✅ EVITAR DUPLICADOS
-            if ($pago->estado === "pagado") {
+            // ✅ evitar duplicados
+            if (
+                $pago->estado === "pagado"
+            ) {
 
                 return response()->json([
-                    "status" => "ya procesado"
+                    "status" =>
+                    "ya procesado"
                 ]);
             }
 
-            // ✅ APROBAR PAGO
-            $pago->estado = "pagado";
+            // ✅ aprobar
+            $pago->estado =
+                "pagado";
 
-            $pago->fecha_pago = now();
+            $pago->fecha_pago =
+                now();
 
-            $pago->mp_payment_id = "SIMULADO";
+            $pago->mp_payment_id =
+                "SIMULADO";
 
             $pago->save();
 
-            // ✅ LOG
-            Log::info("PAGO SIMULADO", [
+            Log::info(
+                "PAGO SIMULADO",
+                [
 
-                'pago_id' => $pago->id,
+                    'pago_id' =>
+                    $pago->id,
 
-                'modulo' => $pago->modulo,
+                    'modulo' =>
+                    $pago->modulo,
 
-                'monto' => $pago->monto
+                    'monto' =>
+                    $pago->monto
 
-            ]);
+                ]
+            );
 
-            // ✅ CREAR CONSULTA
-            Consulta::create([
+            // ✅ PROCESAR MÓDULO
+            $this->procesarModulo($pago);
 
-                'user_id' => $pago->user_id,
-
-                'tipo' => $pago->modulo,
-
-                'monto' => $pago->monto,
-
-                'estado' => 'pagado',
-
-                'metodo_pago' => 'mercadopago',
-
-                'external_reference' => $pago->external_reference,
-
-                'fecha_pago' => now(),
-
-            ]);
-
-            // ✅ NOTIFICACIÓN
+            // 🔔 NOTIFICACIÓN
             Notification::create([
 
-                'title' => 'Nuevo pago aprobado',
+                'title' =>
+                'Nuevo pago aprobado',
 
                 'message' =>
                 'Se recibió un pago de ' .
-                    $pago->modulo .
+                    strtoupper($pago->modulo) .
                     ' por $' .
                     number_format(
                         $pago->monto,
@@ -324,7 +424,7 @@ class PagoController extends Controller
                         '.'
                     ),
 
-                'read' => false
+                'read' => false,
 
             ]);
 
@@ -333,9 +433,91 @@ class PagoController extends Controller
             ]);
         } catch (\Exception $e) {
 
+            Log::error($e);
+
             return response()->json([
-                "error" => $e->getMessage()
+
+                "error" => $e->getMessage(),
+
+                "line" => $e->getLine(),
+
+                "file" => $e->getFile(),
+
             ], 500);
+        }
+    }
+
+    private function procesarModulo($pago)
+    {
+        switch ($pago->modulo) {
+
+            case 'turno':
+
+                Consulta::create([
+
+                    'user_id' =>
+                    $pago->user_id,
+
+                    'tipo' =>
+                    'turno',
+
+                    'monto' =>
+                    $pago->monto,
+
+                    'estado' =>
+                    'pagado',
+
+                    'metodo_pago' =>
+                    'mercadopago',
+
+                    'external_reference' =>
+                    $pago->external_reference,
+
+                    'fecha_pago' =>
+                    now(),
+
+                    'fecha' =>
+                    $pago->metadata['fecha'] ?? null,
+
+                    'hora' =>
+                    $pago->metadata['hora'] ?? null,
+
+                ]);
+
+                break;
+
+            case 'consulta-rapida':
+
+            case 'consulta-urgente':
+
+            case 'teleconsulta':
+
+                Consulta::create([
+
+                    'user_id' =>
+                    $pago->user_id,
+
+                    'tipo' =>
+                    $pago->modulo,
+
+                    'monto' =>
+                    $pago->monto,
+
+                    'estado' =>
+                    'pagado',
+
+                    'metodo_pago' =>
+                    'mercadopago',
+
+                    'external_reference' =>
+                    $pago->external_reference,
+
+                    'fecha_pago' =>
+                    now(),
+
+                ]);
+
+                break;
         }
     }
 
@@ -343,17 +525,85 @@ class PagoController extends Controller
     {
         try {
 
-            // 🔥 IMPORTANTE: traer usuario
             $consultas = Consulta::with('user')
-                ->where('estado', '!=', 'pendiente_pago')
-                ->orderBy('created_at', 'desc')
+
+                ->where(
+                    'tipo',
+                    '!=',
+                    'turno'
+                )
+
+                ->where(
+                    'estado',
+                    '!=',
+                    'pendiente_pago'
+                )
+
+                ->orderBy(
+                    'created_at',
+                    'desc'
+                )
+
                 ->get();
 
-            return response()->json($consultas);
+            return response()->json(
+                $consultas
+            );
         } catch (\Exception $e) {
 
+            Log::error($e);
+
             return response()->json([
-                "error" => $e->getMessage()
+
+                "error" => $e->getMessage(),
+
+                "line" => $e->getLine(),
+
+                "file" => $e->getFile(),
+
+            ], 500);
+        }
+    }
+
+    public function listarTurnos()
+    {
+        try {
+
+            $turnos = Consulta::with('user')
+
+                ->where(
+                    'tipo',
+                    'turno'
+                )
+
+                ->where(
+                    'estado',
+                    '!=',
+                    'pendiente_pago'
+                )
+
+                ->orderBy(
+                    'created_at',
+                    'desc'
+                )
+
+                ->get();
+
+            return response()->json(
+                $turnos
+            );
+        } catch (\Exception $e) {
+
+            Log::error($e);
+
+            return response()->json([
+
+                "error" => $e->getMessage(),
+
+                "line" => $e->getLine(),
+
+                "file" => $e->getFile(),
+
             ], 500);
         }
     }
@@ -361,21 +611,35 @@ class PagoController extends Controller
     public function listarNotificaciones()
     {
         return response()->json(
-            Notification::orderBy('created_at', 'desc')->get()
+
+            Notification::orderBy(
+                'created_at',
+                'desc'
+            )->get()
+
         );
     }
 
     public function contarNotificaciones()
     {
         return response()->json([
-            "total" => Notification::where('read', false)->count()
+
+            "total" => Notification::where(
+                'read',
+                false
+            )->count()
+
         ]);
     }
 
     public function marcarNotificacionesLeidas()
     {
-        Notification::where('read', false)
-            ->update(['read' => true]);
+        Notification::where(
+            'read',
+            false
+        )->update([
+            'read' => true
+        ]);
 
         return response()->json([
             "success" => true
@@ -384,16 +648,30 @@ class PagoController extends Controller
 
     public function guardarToken(Request $request)
     {
-        Log::info("TOKEN REQUEST:", $request->all());
+        Log::info(
+            "TOKEN REQUEST:",
+            $request->all()
+        );
 
-        if (!$request->token || !$request->user_id) {
-            return response()->json(["success" => false]);
+        if (
+            !$request->token ||
+            !$request->user_id
+        ) {
+
+            return response()->json([
+                "success" => false
+            ]);
         }
 
-        $user = User::find($request->user_id);
+        $user = User::find(
+            $request->user_id
+        );
 
         if ($user) {
-            $user->push_token = $request->token;
+
+            $user->push_token =
+                $request->token;
+
             $user->save();
         }
 

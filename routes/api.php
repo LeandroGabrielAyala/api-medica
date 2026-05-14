@@ -73,3 +73,6 @@ Route::get('/certificados', [CertificadoController::class, 'index']);
 Route::post('/certificados', [CertificadoController::class, 'store']);
 Route::get('/certificados/{id}', [CertificadoController::class, 'show']);
 Route::post('/certificados/{id}/archivo', [CertificadoController::class, 'subirArchivo']);
+
+// TURNOS
+Route::get( '/turnos', [PagoController::class, 'listarTurnos']);
