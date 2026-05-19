@@ -126,15 +126,16 @@ class PagoController extends Controller
             ]);
         } catch (\Exception $e) {
 
-            Log::error($e);
+            Log::error("ERROR MP", [
+                'mensaje' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
 
             return response()->json([
 
                 "error" => $e->getMessage(),
 
-                "line" => $e->getLine(),
-
-                "file" => $e->getFile(),
+                "trace" => $e->getTraceAsString()
 
             ], 500);
         }
