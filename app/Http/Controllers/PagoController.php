@@ -192,163 +192,6 @@ class PagoController extends Controller
         }
     }
 
-    // public function webhook(Request $request)
-    // {
-    //     try {
-
-    //         $data = $request->all();
-
-    //         Log::info(
-    //             "Webhook MP:",
-    //             $data
-    //         );
-
-    //         if (isset($data['data']['id'])) {
-
-    //             $paymentId =
-    //                 $data['data']['id'];
-
-    //             MercadoPagoConfig::setAccessToken(
-    //                 env('MP_ACCESS_TOKEN')
-    //             );
-
-    //             $client = new \MercadoPago\Client\Payment\PaymentClient();
-
-    //             // 🔥 LOCAL
-    //             // $payment = $client->get($paymentId);
-    //             $payment = $client->get($paymentId);
-
-    //             $externalReference =
-    //                 $payment->external_reference;
-
-    //             if (
-    //                 $payment->status === "approved"
-    //             ) {
-
-    //                 $pago = Pago::where(
-    //                     'external_reference',
-    //                     $externalReference
-    //                 )->first();
-
-    //                 if ($pago) {
-
-    //                     // ✅ evitar duplicados
-    //                     if (
-    //                         $pago->estado === "pagado"
-    //                     ) {
-
-    //                         return response()->json([
-    //                             "status" =>
-    //                             "ya procesado"
-    //                         ]);
-    //                     }
-
-    //                     $pago->estado =
-    //                         "pagado";
-
-    //                     $pago->fecha_pago =
-    //                         now();
-
-    //                     $pago->mp_payment_id =
-    //                         $paymentId;
-
-    //                     $pago->save();
-
-    //                     Log::info(
-    //                         "PAGO APROBADO",
-    //                         [
-
-    //                             'pago_id' =>
-    //                             $pago->id,
-
-    //                             'modulo' =>
-    //                             $pago->modulo,
-
-    //                             'monto' =>
-    //                             $pago->monto
-
-    //                         ]
-    //                     );
-
-    //                     // ✅ PROCESAR MÓDULO
-    //                     $this->procesarModulo($pago);
-
-    //                     // 🔔 NOTIFICACIÓN
-    //                     Notification::create([
-
-    //                         'title' =>
-    //                         'Nuevo pago aprobado',
-
-    //                         'message' =>
-    //                         'Se recibió un pago de ' .
-    //                             strtoupper($pago->modulo) .
-    //                             ' por $' .
-    //                             number_format(
-    //                                 $pago->monto,
-    //                                 2,
-    //                                 ',',
-    //                                 '.'
-    //                             ),
-
-    //                         'read' => false,
-
-    //                     ]);
-
-    //                     // 📲 PUSH
-    //                     $user = User::where(
-    //                         'role',
-    //                         'medico'
-    //                     )->first();
-
-    //                     if (
-    //                         $user &&
-    //                         $user->push_token
-    //                     ) {
-
-    //                         Http::post(
-    //                             'https://exp.host/--/api/v2/push/send',
-    //                             [
-
-    //                                 'to' =>
-    //                                 $user->push_token,
-
-    //                                 'title' =>
-    //                                 'Nueva consulta',
-
-    //                                 'body' =>
-    //                                 'Nuevo pago aprobado: ' .
-    //                                     $pago->modulo,
-
-    //                             ]
-    //                         );
-    //                     }
-    //                 }
-    //             }
-    //         }
-
-    //         return response()->json([
-    //             "status" => "ok"
-    //         ]);
-    //     } catch (\Exception $e) {
-
-    //         Log::error(
-    //             $e->getMessage()
-    //         );
-
-    //         Log::error($e);
-
-    //         return response()->json([
-
-    //             "error" => $e->getMessage(),
-
-    //             "line" => $e->getLine(),
-
-    //             "file" => $e->getFile(),
-
-    //         ], 500);
-    //     }
-    // }
-
     public function simularPago(Request $request)
     {
         try {
@@ -522,48 +365,34 @@ class PagoController extends Controller
         }
     }
 
-    public function listarConsultas()
+    public function listarConsultas(Request $request)
     {
-        try {
+        $consultas = Consulta::with('user')
 
-            $consultas = Consulta::with('user')
+            ->where(
+                'user_id',
+                $request->user_id
+            )
 
-                ->where(
-                    'tipo',
-                    '!=',
-                    'turno'
-                )
+            ->where(
+                'tipo',
+                '!=',
+                'turno'
+            )
 
-                ->where(
-                    'estado',
-                    '!=',
-                    'pendiente_pago'
-                )
+            ->where(
+                'estado',
+                '!=',
+                'pendiente_pago'
+            )
 
-                ->orderBy(
-                    'created_at',
-                    'desc'
-                )
+            ->latest()
 
-                ->get();
+            ->get();
 
-            return response()->json(
-                $consultas
-            );
-        } catch (\Exception $e) {
-
-            Log::error($e);
-
-            return response()->json([
-
-                "error" => $e->getMessage(),
-
-                "line" => $e->getLine(),
-
-                "file" => $e->getFile(),
-
-            ], 500);
-        }
+        return response()->json(
+            $consultas
+        );
     }
 
     public function listarTurnos()

@@ -7,14 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class Consulta extends Model
 {
     protected $fillable = [
-
+        'user_id',
         'tipo',
         'monto',
         'metodo_pago',
         'estado',
         'external_reference',
-        'fecha_pago'
-
+        'fecha_pago',
+        'fecha',
+        'hora'
     ];
 
     public function user()
