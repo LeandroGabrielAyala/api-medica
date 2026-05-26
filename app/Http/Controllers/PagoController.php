@@ -192,6 +192,81 @@ class PagoController extends Controller
         }
     }
 
+    public function tomarConsulta($id)
+    {
+        try {
+
+            $consulta =
+                Consulta::findOrFail($id);
+
+            $consulta->estado =
+                "en_atencion";
+
+            $consulta->fecha_inicio =
+                now();
+
+            $consulta->save();
+
+            return response()->json([
+                "success" => true
+            ]);
+        } catch (\Exception $e) {
+
+            return response()->json([
+                "error" => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function finalizarConsulta($id)
+    {
+        try {
+
+            $consulta =
+                Consulta::findOrFail($id);
+
+            $consulta->estado =
+                "finalizado";
+
+            $consulta->fecha_finalizacion =
+                now();
+
+            $consulta->save();
+
+            return response()->json([
+                "success" => true
+            ]);
+        } catch (\Exception $e) {
+
+            return response()->json([
+                "error" => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function cancelarConsulta($id)
+    {
+        try {
+
+            $consulta =
+                Consulta::findOrFail($id);
+
+            $consulta->estado =
+                "cancelado";
+
+            $consulta->save();
+
+            return response()->json([
+                "success" => true
+            ]);
+        } catch (\Exception $e) {
+
+            return response()->json([
+                "error" => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function simularPago(Request $request)
     {
         try {

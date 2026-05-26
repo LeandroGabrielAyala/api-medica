@@ -20,7 +20,20 @@ Route::post('/mp/webhook', [PagoController::class, 'webhook']);
 Route::post('/simular-pago', [PagoController::class,'simularPago']);
 
 Route::get('/consultas', [PagoController::class, 'listarConsultas']);
-Route::post('/consultas/{id}/atender', [PagoController::class, 'marcarAtendido']);
+Route::post(
+    '/consultas/{id}/tomar',
+    [PagoController::class, 'tomarConsulta']
+);
+
+Route::post(
+    '/consultas/{id}/finalizar',
+    [PagoController::class, 'finalizarConsulta']
+);
+
+Route::post(
+    '/consultas/{id}/cancelar',
+    [PagoController::class, 'cancelarConsulta']
+);
 Route::get('/notificaciones', [PagoController::class, 'listarNotificaciones']);
 Route::get('/notificaciones/count', [PagoController::class, 'contarNotificaciones']);
 Route::post('/notificaciones/read', [PagoController::class, 'marcarNotificacionesLeidas']);

@@ -9,6 +9,7 @@ class Consulta extends Model
     protected $fillable = [
         'user_id',
         'tipo',
+        'descripcion',
         'monto',
         'metodo_pago',
         'estado',
@@ -21,5 +22,13 @@ class Consulta extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function medico()
+    {
+        return $this->belongsTo(
+            User::class,
+            'medico_id'
+        );
     }
 }
