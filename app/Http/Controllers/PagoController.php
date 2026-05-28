@@ -411,26 +411,28 @@ class PagoController extends Controller
 
             case 'teleconsulta':
 
-            case 'receta':
-
-                $datos = $pago->metadata;
-
-                \App\Models\Receta::create([
+                Consulta::create([
 
                     'user_id' =>
                     $pago->user_id,
 
-                    'motivo' =>
-                    $datos['motivo'] ?? '',
+                    'tipo' =>
+                    $pago->modulo,
 
-                    'medicamento' =>
-                    $datos['medicamento'] ?? null,
-
-                    'urgente' =>
-                    $datos['urgente'] ?? false,
+                    'monto' =>
+                    $pago->monto,
 
                     'estado' =>
-                    'Pendiente'
+                    'pendiente',
+
+                    'metodo_pago' =>
+                    'mercadopago',
+
+                    'external_reference' =>
+                    $pago->external_reference,
+
+                    'fecha_pago' =>
+                    now(),
 
                 ]);
 
