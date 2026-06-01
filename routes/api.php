@@ -34,6 +34,12 @@ Route::post(
     '/consultas/{id}/cancelar',
     [PagoController::class, 'cancelarConsulta']
 );
+
+Route::post(
+    '/consultas/{id}/atender',
+    [PagoController::class, 'marcarAtendido']
+);
+
 Route::get('/notificaciones', [PagoController::class, 'listarNotificaciones']);
 Route::get('/notificaciones/count', [PagoController::class, 'contarNotificaciones']);
 Route::post('/notificaciones/read', [PagoController::class, 'marcarNotificacionesLeidas']);

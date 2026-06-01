@@ -492,14 +492,11 @@ class PagoController extends Controller
         }
     }
 
-    public function listarConsultas(Request $request)
-    {
-        $consultas = Consulta::with('user')
+public function listarConsultas(Request $request)
+{
+    try {
 
-            ->where(
-                'user_id',
-                $request->user_id
-            )
+        $query = Consulta::with('user')
 
             ->where(
                 'tipo',
@@ -511,16 +508,43 @@ class PagoController extends Controller
                 'estado',
                 '!=',
                 'pendiente_pago'
-            )
+            );
 
-            ->latest()
+        // 👨‍⚕️ PANEL MÉDICO
+        if ($request->modo === "medico") {
 
-            ->get();
+            $consultas = $query
+                ->latest()
+                ->get();
 
-        return response()->json(
-            $consultas
-        );
+        }
+
+        // 👤 PACIENTE
+        else {
+
+            $consultas = $query
+
+                ->where(
+                    'user_id',
+                    $request->user_id
+                )
+
+                ->latest()
+
+                ->get();
+
+        }
+
+        return response()->json($consultas);
+
+    } catch (\Exception $e) {
+
+        return response()->json([
+            "error" => $e->getMessage()
+        ], 500);
+
     }
+}
 
     public function listarTurnos()
     {
