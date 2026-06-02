@@ -10,6 +10,7 @@ use App\Models\Notification;
 use App\Models\Pago;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
+use App\Models\Turno;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -187,6 +188,32 @@ class PagoController extends Controller
                 "line" => $e->getLine(),
 
                 "file" => $e->getFile(),
+
+            ], 500);
+        }
+    }
+
+    public function marcarTurnoAtendido($id)
+    {
+        try {
+
+            $turno = Turno::find($id);
+
+            if ($turno) {
+
+                $turno->estado = "atendido";
+
+                $turno->save();
+            }
+
+            return response()->json([
+                "status" => "ok"
+            ]);
+        } catch (\Exception $e) {
+
+            return response()->json([
+
+                "error" => $e->getMessage(),
 
             ], 500);
         }
@@ -372,19 +399,19 @@ class PagoController extends Controller
 
             case 'turno':
 
-                Consulta::create([
+                Turno::create([
 
                     'user_id' =>
                     $pago->user_id,
 
                     'tipo' =>
-                    'turno',
+                    'Turno Médico',
 
                     'monto' =>
                     $pago->monto,
 
                     'estado' =>
-                    'pagado',
+                    'pendiente',
 
                     'metodo_pago' =>
                     'mercadopago',
@@ -492,68 +519,15 @@ class PagoController extends Controller
         }
     }
 
-public function listarConsultas(Request $request)
-{
-    try {
-
-        $query = Consulta::with('user')
-
-            ->where(
-                'tipo',
-                '!=',
-                'turno'
-            )
-
-            ->where(
-                'estado',
-                '!=',
-                'pendiente_pago'
-            );
-
-        // 👨‍⚕️ PANEL MÉDICO
-        if ($request->modo === "medico") {
-
-            $consultas = $query
-                ->latest()
-                ->get();
-
-        }
-
-        // 👤 PACIENTE
-        else {
-
-            $consultas = $query
-
-                ->where(
-                    'user_id',
-                    $request->user_id
-                )
-
-                ->latest()
-
-                ->get();
-
-        }
-
-        return response()->json($consultas);
-
-    } catch (\Exception $e) {
-
-        return response()->json([
-            "error" => $e->getMessage()
-        ], 500);
-
-    }
-}
-
-    public function listarTurnos()
+    public function listarConsultas(Request $request)
     {
         try {
 
-            $turnos = Consulta::with('user')
+            $query = Consulta::with('user')
 
                 ->where(
                     'tipo',
+                    '!=',
                     'turno'
                 )
 
@@ -561,21 +535,73 @@ public function listarConsultas(Request $request)
                     'estado',
                     '!=',
                     'pendiente_pago'
+                );
+
+            // 👨‍⚕️ PANEL MÉDICO
+            if ($request->modo === "medico") {
+
+                $consultas = $query
+                    ->latest()
+                    ->get();
+            }
+
+            // 👤 PACIENTE
+            else {
+
+                $consultas = $query
+
+                    ->where(
+                        'user_id',
+                        $request->user_id
+                    )
+
+                    ->latest()
+
+                    ->get();
+            }
+
+            return response()->json($consultas);
+        } catch (\Exception $e) {
+
+            return response()->json([
+                "error" => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function listarTurnos(Request $request)
+    {
+        try {
+
+            $query = Turno::with('user');
+
+            // PANEL MÉDICO
+            if ($request->modo === "medico") {
+
+                $turnos = $query
+
+                    ->orderBy('created_at', 'desc')
+
+                    ->get();
+
+                return response()->json($turnos);
+            }
+
+            // PANEL PACIENTE
+
+            $turnos = $query
+
+                ->where(
+                    'user_id',
+                    $request->user_id
                 )
 
-                ->orderBy(
-                    'created_at',
-                    'desc'
-                )
+                ->orderBy('created_at', 'desc')
 
                 ->get();
 
-            return response()->json(
-                $turnos
-            );
+            return response()->json($turnos);
         } catch (\Exception $e) {
-
-            Log::error($e);
 
             return response()->json([
 

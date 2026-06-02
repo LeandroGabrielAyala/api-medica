@@ -95,3 +95,7 @@ Route::post('/certificados/{id}/archivo', [CertificadoController::class, 'subirA
 
 // TURNOS
 Route::get( '/turnos', [PagoController::class, 'listarTurnos']);
+Route::post(
+    '/turnos/{id}/atender',
+    [PagoController::class, 'marcarTurnoAtendido']
+);
