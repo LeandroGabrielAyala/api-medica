@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Http;
 use App\Models\Turno;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Models\EstudioImagen;
+use App\Models\Estudio;
 
 class PagoController extends Controller
 {
@@ -490,30 +492,34 @@ class PagoController extends Controller
 
             case 'estudio':
 
-                Consulta::create([
+                $estudio = Estudio::create([
 
                     'user_id' =>
                     $pago->user_id,
 
-                    'tipo' =>
-                    $pago->modulo,
-
-                    'monto' =>
-                    $pago->monto,
+                    'descripcion' =>
+                    $pago->metadata['descripcion'] ?? '',
 
                     'estado' =>
-                    'pagado',
-
-                    'metodo_pago' =>
-                    'mercadopago',
-
-                    'external_reference' =>
-                    $pago->external_reference,
-
-                    'fecha_pago' =>
-                    now(),
+                    'Pendiente',
 
                 ]);
+
+                foreach (
+                    ($pago->metadata['imagenes'] ?? [])
+                    as $imagen
+                ) {
+
+                    EstudioImagen::create([
+
+                        'estudio_id' =>
+                        $estudio->id,
+
+                        'imagen' =>
+                        $imagen,
+
+                    ]);
+                }
 
                 break;
         }
