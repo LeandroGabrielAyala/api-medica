@@ -32,26 +32,26 @@ class CertificadoController extends Controller
     }
 
     // ➕ CREAR SOLICITUD
-    public function store(Request $request)
-    {
-        $request->validate([
-            'user_id' => 'required',
-            'tipo' => 'required',
-            'motivo' => 'required',
-        ]);
+    // public function store(Request $request)
+    // {
+    //     $request->validate([
+    //         'user_id' => 'required',
+    //         'tipo' => 'required',
+    //         'motivo' => 'required',
+    //     ]);
 
-        $certificado = Certificado::create([
-            'user_id' => $request->user_id,
-            'tipo' => $request->tipo,
-            'motivo' => $request->motivo,
-            'estado' => 'Pendiente',
-        ]);
+    //     $certificado = Certificado::create([
+    //         'user_id' => $request->user_id,
+    //         'tipo' => $request->tipo,
+    //         'motivo' => $request->motivo,
+    //         'estado' => 'Pendiente',
+    //     ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => $certificado,
-        ]);
-    }
+    //     return response()->json([
+    //         'success' => true,
+    //         'data' => $certificado,
+    //     ]);
+    // }
 
     // 👁 VER DETALLE
     public function show($id)

@@ -3,31 +3,31 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
 use App\Models\Consulta;
 use App\Models\Notification;
 use App\Models\Pago;
 use App\Models\User;
-use Illuminate\Support\Facades\Http;
 use App\Models\Turno;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use App\Models\EstudioImagen;
 use App\Models\Estudio;
+use App\Models\Receta;
+use App\Models\Certificado;
 
 class PagoController extends Controller
 {
     public function crearPago(Request $request)
     {
         try {
-
             MercadoPagoConfig::setAccessToken(
                 env('MP_ACCESS_TOKEN')
             );
 
             $request->validate([
-
                 'tipo' => 'required|string',
                 'monto' => 'required|numeric',
                 'user_id' => 'required|exists:users,id',
@@ -36,96 +36,58 @@ class PagoController extends Controller
             $tipo = $request->tipo;
             $monto = (float) $request->monto;
             $user = User::find($request->user_id);
-            $externalReference =
-                Str::uuid()->toString();
+            $externalReference = Str::uuid()->toString();
             $pago = Pago::create([
-                'user_id' =>
-                $request->user_id,
-                'modulo' =>
-                $request->tipo,
-                'monto' =>
-                $monto,
-                'estado' =>
-                'pendiente',
-                'external_reference' =>
-                $externalReference,
-                'metadata' =>
-                $request->metadata ?? [],
+                'user_id' => $request->user_id,
+                'modulo' => $request->tipo,
+                'monto' => $monto,
+                'estado' => 'pendiente',
+                'external_reference' => $externalReference,
+                'metadata' => $request->metadata ?? [],
             ]);
 
-            $client =
-                new PreferenceClient();
+            $client = new PreferenceClient();
 
-            $preference =
-                $client->create([
+            $preference = $client->create([
+                "items" => [
+                    [
+                        "title" => ucfirst($tipo),
+                        "quantity" => (int) 1,
+                        "unit_price" => (float) $monto,
+                        "currency_id" => "ARS"
+                    ]
+                ],
 
-                    "items" => [
-                        [
-                            "title" =>
-                            ucfirst($tipo),
+                "payer" => [
+                    "email" => $user->email
+                ],
 
-                            "quantity" => (int) 1,
+                "external_reference" => $pago->external_reference,
 
-                            "unit_price" =>
-                            (float) $monto,
+                // "notification_url" =>
+                // env('MP_WEBHOOK_URL'),
 
-                            "currency_id" =>
-                            "ARS"
-                        ]
-                    ],
+                "back_urls" => [
+                    "success" => env('MP_SUCCESS_URL'),
+                    "failure" => env('MP_FAILURE_URL'),
+                    "pending" => env('MP_PENDING_URL')
+                ],
 
-                    "payer" => [
-                        "email" =>
-                        $user->email
-                    ],
-
-                    "external_reference" =>
-                    $pago->external_reference,
-
-                    // "notification_url" =>
-                    // env('MP_WEBHOOK_URL'),
-
-                    "back_urls" => [
-
-                        "success" =>
-                        env('MP_SUCCESS_URL'),
-
-                        "failure" =>
-                        env('MP_FAILURE_URL'),
-
-                        "pending" =>
-                        env('MP_PENDING_URL')
-
-                    ],
-
-                    "auto_return" =>
-                    "approved"
-
-                ]);
+                "auto_return" => "approved"
+            ]);
 
             $pago->update([
-
                 'metadata' => array_merge(
-
                     $pago->metadata ?? [],
-
                     [
-                        'mp_preference_id' =>
-                        $preference->id
+                        'mp_preference_id' => $preference->id
                     ]
-
                 )
-
             ]);
 
             return response()->json([
-
-                "init_point" =>
-                $preference->init_point,
-
-                "external_reference" =>
-                $externalReference
-
+                "init_point" => $preference->init_point,
+                "external_reference" => $externalReference
             ]);
         } catch (\Exception $e) {
 
@@ -170,9 +132,7 @@ class PagoController extends Controller
 
             if ($consulta) {
 
-                $consulta->estado =
-                    "atendido";
-
+                $consulta->estado = "atendido";
                 $consulta->save();
             }
 
@@ -184,13 +144,9 @@ class PagoController extends Controller
             Log::error($e);
 
             return response()->json([
-
                 "error" => $e->getMessage(),
-
                 "line" => $e->getLine(),
-
                 "file" => $e->getFile(),
-
             ], 500);
         }
     }
@@ -402,34 +358,15 @@ class PagoController extends Controller
             case 'turno':
 
                 Turno::create([
-
-                    'user_id' =>
-                    $pago->user_id,
-
-                    'tipo' =>
-                    'Turno Médico',
-
-                    'monto' =>
-                    $pago->monto,
-
-                    'estado' =>
-                    'pendiente',
-
-                    'metodo_pago' =>
-                    'mercadopago',
-
-                    'external_reference' =>
-                    $pago->external_reference,
-
-                    'fecha_pago' =>
-                    now(),
-
-                    'fecha' =>
-                    $pago->metadata['fecha'] ?? null,
-
-                    'hora' =>
-                    $pago->metadata['hora'] ?? null,
-
+                    'user_id' => $pago->user_id,
+                    'tipo' => 'Turno Médico',
+                    'monto' => $pago->monto,
+                    'estado' => 'pendiente',
+                    'metodo_pago' => 'mercadopago',
+                    'external_reference' => $pago->external_reference,
+                    'fecha_pago' => now(),
+                    'fecha' => $pago->metadata['fecha'] ?? null,
+                    'hora' => $pago->metadata['hora'] ?? null,
                 ]);
 
                 break;
@@ -441,28 +378,13 @@ class PagoController extends Controller
             case 'teleconsulta':
 
                 Consulta::create([
-
-                    'user_id' =>
-                    $pago->user_id,
-
-                    'tipo' =>
-                    $pago->modulo,
-
-                    'monto' =>
-                    $pago->monto,
-
-                    'estado' =>
-                    'pendiente',
-
-                    'metodo_pago' =>
-                    'mercadopago',
-
-                    'external_reference' =>
-                    $pago->external_reference,
-
-                    'fecha_pago' =>
-                    now(),
-
+                    'user_id' => $pago->user_id,
+                    'tipo' => $pago->modulo,
+                    'monto' => $pago->monto,
+                    'estado' => 'pendiente',
+                    'metodo_pago' => 'mercadopago',
+                    'external_reference' => $pago->external_reference,
+                    'fecha_pago' => now(),
                 ]);
 
                 break;
@@ -472,20 +394,11 @@ class PagoController extends Controller
                 $datos =
                     $pago->metadata;
 
-                \App\Models\Certificado::create([
-
-                    'user_id' =>
-                    $pago->user_id,
-
-                    'tipo' =>
-                    $datos['tipo'] ?? '',
-
-                    'motivo' =>
-                    $datos['motivo'] ?? '',
-
-                    'estado' =>
-                    'Pendiente'
-
+                Certificado::create([
+                    'user_id' => $pago->user_id,
+                    'tipo' => $datos['tipo'] ?? '',
+                    'motivo' => $datos['motivo'] ?? '',
+                    'estado' => 'Pendiente'
                 ]);
 
                 break;
@@ -493,16 +406,9 @@ class PagoController extends Controller
             case 'estudio':
 
                 $estudio = Estudio::create([
-
-                    'user_id' =>
-                    $pago->user_id,
-
-                    'descripcion' =>
-                    $pago->metadata['descripcion'] ?? '',
-
-                    'estado' =>
-                    'Pendiente',
-
+                    'user_id' => $pago->user_id,
+                    'descripcion' => $pago->metadata['descripcion'] ?? '',
+                    'estado' => 'Pendiente',
                 ]);
 
                 foreach (
@@ -520,6 +426,20 @@ class PagoController extends Controller
 
                     ]);
                 }
+
+                break;
+
+            case 'receta':
+
+                $datos = $pago->metadata;
+
+                Receta::create([
+                    'user_id' => $pago->user_id,
+                    'motivo' => $datos['motivo'] ?? '',
+                    'medicamento' => $datos['medicamento'] ?? '',
+                    'urgente' => $datos['urgente'] ?? false,
+                    'estado' => 'Pendiente',
+                ]);
 
                 break;
         }
@@ -690,6 +610,42 @@ class PagoController extends Controller
 
         return response()->json([
             "success" => true
+        ]);
+    }
+
+    public function testPush()
+    {
+        $medico = User::where(
+            'role',
+            'medico'
+        )->first();
+
+        if (
+            !$medico ||
+            !$medico->push_token
+        ) {
+
+            return response()->json([
+                'error' => 'No existe token'
+            ]);
+        }
+
+        $response = Http::post(
+            'https://exp.host/--/api/v2/push/send',
+            [
+                'to' => $medico->push_token,
+
+                'title' => 'Prueba Push',
+
+                'body' => 'Notificación enviada desde Laravel',
+
+                'sound' => 'default',
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'expo' => $response->json()
         ]);
     }
 }

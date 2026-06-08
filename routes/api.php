@@ -99,3 +99,9 @@ Route::post(
     '/turnos/{id}/atender',
     [PagoController::class, 'marcarTurnoAtendido']
 );
+
+// TEST PUSH NOTIFICATIONS
+Route::get(
+    '/test-push',
+    [PagoController::class, 'testPush']
+);

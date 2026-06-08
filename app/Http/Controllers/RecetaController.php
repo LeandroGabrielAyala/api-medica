@@ -58,10 +58,8 @@ class RecetaController extends Controller
     public function show($id)
     {
         return response()->json(
-
             Receta::with(['user', 'medico'])
                 ->findOrFail($id)
-
         );
     }
 
@@ -73,18 +71,11 @@ class RecetaController extends Controller
         ]);
 
         $receta = Receta::findOrFail($id);
-
-        $path = $request->file('archivo')
-            ->store('recetas', 'public');
-
+        $path = $request->file('archivo')->store('recetas', 'public');
         $receta->archivo = $path;
-
         $receta->estado = "Lista";
-
         $receta->medico_id = $request->medico_id;
-
         $receta->indicaciones = $request->indicaciones;
-
         $receta->save();
 
         return response()->json([
