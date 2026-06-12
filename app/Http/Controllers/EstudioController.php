@@ -116,4 +116,19 @@ class EstudioController extends Controller
             Estudio::with('imagenes')->findOrFail($id)
         );
     }
+
+    public function uploadImagen(Request $request)
+    {
+        $request->validate([
+            'imagen' => 'required|image'
+        ]);
+
+        $path = $request->file('imagen')
+            ->store('estudios', 'public');
+
+        return response()->json([
+            'success' => true,
+            'path' => $path
+        ]);
+    }
 }

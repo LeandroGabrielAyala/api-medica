@@ -105,3 +105,9 @@ Route::get(
     '/test-push',
     [PagoController::class, 'testPush']
 );
+
+
+Route::post(
+    '/estudios/upload-imagen',
+    [EstudioController::class, 'uploadImagen']
+);
