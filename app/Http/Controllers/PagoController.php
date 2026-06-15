@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use MercadoPago\Client\Payment\PaymentClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -24,7 +25,7 @@ class PagoController extends Controller
     {
         try {
             MercadoPagoConfig::setAccessToken(
-                env('MP_ACCESS_TOKEN')
+                config('services.mercadopago.access_token')
             );
 
             $request->validate([
@@ -48,6 +49,13 @@ class PagoController extends Controller
 
             $client = new PreferenceClient();
 
+Log::info('MP CONFIG', [
+    'token' => config('services.mercadopago.access_token'),
+    'success' => config('services.mercadopago.success_url'),
+    'failure' => config('services.mercadopago.failure_url'),
+    'pending' => config('services.mercadopago.pending_url'),
+]);
+
             $preference = $client->create([
                 "items" => [
                     [
@@ -64,13 +72,13 @@ class PagoController extends Controller
 
                 "external_reference" => $pago->external_reference,
 
-                // "notification_url" =>
-                // env('MP_WEBHOOK_URL'),
+                "notification_url" =>
+                env('MP_WEBHOOK_URL'),
 
                 "back_urls" => [
-                    "success" => env('MP_SUCCESS_URL'),
-                    "failure" => env('MP_FAILURE_URL'),
-                    "pending" => env('MP_PENDING_URL')
+                    "success" => config('services.mercadopago.success_url'),
+                    "failure" => config('services.mercadopago.failure_url'),
+                    "pending" => config('services.mercadopago.pending_url'),
                 ],
 
                 "auto_return" => "approved"
@@ -648,4 +656,138 @@ class PagoController extends Controller
             'expo' => $response->json()
         ]);
     }
+
+
+
+
+public function webhook(Request $request)
+{
+    try {
+
+        Log::info('WEBHOOK MP', $request->all());
+
+        MercadoPagoConfig::setAccessToken(
+            config('services.mercadopago.access_token')
+        );
+
+        $paymentId = null;
+
+        if (isset($request->data['id'])) {
+            $paymentId = $request->data['id'];
+        }
+
+        if (!$paymentId) {
+            return response()->json([
+                'ok' => true
+            ]);
+        }
+
+        $client = new PaymentClient();
+
+        $payment = $client->get($paymentId);
+
+        Log::info('PAYMENT MP', [
+            'id' => $payment->id,
+            'status' => $payment->status,
+            'external_reference' => $payment->external_reference,
+        ]);
+
+        if ($payment->status !== 'approved') {
+
+            return response()->json([
+                'ok' => true
+            ]);
+        }
+
+        $pago = Pago::where(
+            'external_reference',
+            $payment->external_reference
+        )->first();
+
+        if (!$pago) {
+
+            Log::warning(
+                'PAGO NO ENCONTRADO',
+                [
+                    'external_reference' =>
+                    $payment->external_reference
+                ]
+            );
+
+            return response()->json([
+                'ok' => true
+            ]);
+        }
+
+        if ($pago->estado === 'pagado') {
+
+            return response()->json([
+                'ok' => true
+            ]);
+        }
+
+        $pago->estado = 'pagado';
+
+        $pago->mp_payment_id =
+            $payment->id;
+
+        $pago->fecha_pago =
+            now();
+
+        $pago->save();
+
+        Log::info(
+            'PAGO APROBADO',
+            [
+                'pago_id' => $pago->id,
+                'modulo' => $pago->modulo
+            ]
+        );
+
+        $this->procesarModulo($pago);
+
+        Notification::create([
+
+            'title' =>
+            'Nuevo pago aprobado',
+
+            'message' =>
+            'Se recibió un pago de ' .
+            strtoupper($pago->modulo) .
+            ' por $' .
+            number_format(
+                $pago->monto,
+                2,
+                ',',
+                '.'
+            ),
+
+            'read' => false,
+        ]);
+
+        return response()->json([
+            'ok' => true
+        ]);
+    } catch (\Exception $e) {
+
+        Log::error(
+            'ERROR WEBHOOK MP',
+            [
+                'mensaje' =>
+                $e->getMessage(),
+
+                'trace' =>
+                $e->getTraceAsString()
+            ]
+        );
+
+        return response()->json([
+            'ok' => false
+        ], 500);
+    }
+}
+
+
+
+
 }

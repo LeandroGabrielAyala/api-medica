@@ -117,7 +117,7 @@ class EstudioController extends Controller
         );
     }
 
-    public function uploadImagen(Request $request)
+ public function uploadImagen(Request $request)
     {
         $request->validate([
             'imagen' => 'required|image'

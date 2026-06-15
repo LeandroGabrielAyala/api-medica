@@ -8,7 +8,13 @@ use App\Http\Controllers\EstudioController;
 use App\Http\Controllers\RecetaController;
 use App\Http\Controllers\CertificadoController;
 
+// AUTHENTICATION
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register',[AuthController::class, 'register']);
+
+Route::post('/datos-filiatorios',[AuthController::class, 'guardarDatosFiliatorios']);
+
+
 
 Route::post('/crear-pago', [PagoController::class, 'crearPago']);
 Route::get('/pagos/{external_reference}', [
@@ -105,7 +111,6 @@ Route::get(
     '/test-push',
     [PagoController::class, 'testPush']
 );
-
 
 Route::post(
     '/estudios/upload-imagen',
