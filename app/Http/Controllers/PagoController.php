@@ -18,6 +18,7 @@ use App\Models\EstudioImagen;
 use App\Models\Estudio;
 use App\Models\Receta;
 use App\Models\Certificado;
+use App\Services\PushNotificationService;
 
 class PagoController extends Controller
 {
@@ -142,6 +143,11 @@ Log::info('MP CONFIG', [
 
                 $consulta->estado = "atendido";
                 $consulta->save();
+PushNotificationService::send(
+    $consulta->user_id,
+    "Consulta atendida",
+    "Tu consulta fue atendida por un médico."
+);
             }
 
             return response()->json([
@@ -200,6 +206,12 @@ Log::info('MP CONFIG', [
 
             $consulta->save();
 
+PushNotificationService::send(
+    $consulta->user_id,
+    "Consulta en atención",
+    "Un médico comenzó a atender tu consulta."
+);
+
             return response()->json([
                 "success" => true
             ]);
@@ -225,6 +237,12 @@ Log::info('MP CONFIG', [
                 now();
 
             $consulta->save();
+
+PushNotificationService::send(
+    $consulta->user_id,
+    "Consulta finalizada",
+    "Tu consulta fue finalizada por el médico."
+);
 
             return response()->json([
                 "success" => true
@@ -359,99 +377,152 @@ Log::info('MP CONFIG', [
         }
     }
 
-    private function procesarModulo($pago)
-    {
-        switch ($pago->modulo) {
 
-            case 'turno':
 
-                Turno::create([
-                    'user_id' => $pago->user_id,
-                    'tipo' => 'Turno Médico',
-                    'monto' => $pago->monto,
-                    'estado' => 'pendiente',
-                    'metodo_pago' => 'mercadopago',
-                    'external_reference' => $pago->external_reference,
-                    'fecha_pago' => now(),
-                    'fecha' => $pago->metadata['fecha'] ?? null,
-                    'hora' => $pago->metadata['hora'] ?? null,
+private function procesarModulo($pago)
+{
+    $medico = User::where(
+        'role',
+        'medico'
+    )->first();
+
+    switch ($pago->modulo) {
+
+        case 'turno':
+
+            Turno::create([
+                'user_id' => $pago->user_id,
+                'tipo' => 'Turno Médico',
+                'monto' => $pago->monto,
+                'estado' => 'pendiente',
+                'metodo_pago' => 'mercadopago',
+                'external_reference' => $pago->external_reference,
+                'fecha_pago' => now(),
+                'fecha' => $pago->metadata['fecha'] ?? null,
+                'hora' => $pago->metadata['hora'] ?? null,
+            ]);
+
+            if ($medico) {
+
+                PushNotificationService::send(
+                    $medico->id,
+                    'Nuevo turno',
+                    'Hay una nueva solicitud de turno.'
+                );
+            }
+
+            break;
+
+        case 'consulta-rapida':
+
+        case 'consulta-urgente':
+
+        case 'teleconsulta':
+
+            Consulta::create([
+                'user_id' => $pago->user_id,
+                'tipo' => $pago->modulo,
+                'monto' => $pago->monto,
+                'estado' => 'pendiente',
+                'metodo_pago' => 'mercadopago',
+                'external_reference' => $pago->external_reference,
+                'fecha_pago' => now(),
+            ]);
+
+            if ($medico) {
+
+                PushNotificationService::send(
+                    $medico->id,
+                    'Nueva consulta',
+                    'Un paciente solicitó una consulta.'
+                );
+            }
+
+            break;
+
+        case 'certificado':
+
+            $datos = $pago->metadata;
+
+            Certificado::create([
+                'user_id' => $pago->user_id,
+                'tipo' => $datos['tipo'] ?? '',
+                'motivo' => $datos['motivo'] ?? '',
+                'estado' => 'Pendiente'
+            ]);
+
+            if ($medico) {
+
+                PushNotificationService::send(
+                    $medico->id,
+                    'Nuevo certificado',
+                    'Un paciente solicitó un certificado.'
+                );
+            }
+
+            break;
+
+        case 'estudio':
+
+            $estudio = Estudio::create([
+                'user_id' => $pago->user_id,
+                'descripcion' => $pago->metadata['descripcion'] ?? '',
+                'estado' => 'Pendiente',
+            ]);
+
+            foreach (
+                ($pago->metadata['imagenes'] ?? [])
+                as $imagen
+            ) {
+
+                EstudioImagen::create([
+
+                    'estudio_id' =>
+                    $estudio->id,
+
+                    'imagen' =>
+                    $imagen,
+
                 ]);
+            }
 
-                break;
+            if ($medico) {
 
-            case 'consulta-rapida':
+                PushNotificationService::send(
+                    $medico->id,
+                    'Nuevo estudio',
+                    'Un paciente cargó un nuevo estudio para revisar.'
+                );
+            }
 
-            case 'consulta-urgente':
+            break;
 
-            case 'teleconsulta':
+        case 'receta':
 
-                Consulta::create([
-                    'user_id' => $pago->user_id,
-                    'tipo' => $pago->modulo,
-                    'monto' => $pago->monto,
-                    'estado' => 'pendiente',
-                    'metodo_pago' => 'mercadopago',
-                    'external_reference' => $pago->external_reference,
-                    'fecha_pago' => now(),
-                ]);
+            $datos = $pago->metadata;
 
-                break;
+            Receta::create([
+                'user_id' => $pago->user_id,
+                'motivo' => $datos['motivo'] ?? '',
+                'medicamento' => $datos['medicamento'] ?? '',
+                'urgente' => $datos['urgente'] ?? false,
+                'estado' => 'Pendiente',
+            ]);
 
-            case 'certificado':
+            if ($medico) {
 
-                $datos =
-                    $pago->metadata;
+                PushNotificationService::send(
+                    $medico->id,
+                    'Nueva receta',
+                    'Un paciente solicitó una receta médica.'
+                );
+            }
 
-                Certificado::create([
-                    'user_id' => $pago->user_id,
-                    'tipo' => $datos['tipo'] ?? '',
-                    'motivo' => $datos['motivo'] ?? '',
-                    'estado' => 'Pendiente'
-                ]);
-
-                break;
-
-            case 'estudio':
-
-                $estudio = Estudio::create([
-                    'user_id' => $pago->user_id,
-                    'descripcion' => $pago->metadata['descripcion'] ?? '',
-                    'estado' => 'Pendiente',
-                ]);
-
-                foreach (
-                    ($pago->metadata['imagenes'] ?? [])
-                    as $imagen
-                ) {
-
-                    EstudioImagen::create([
-
-                        'estudio_id' =>
-                        $estudio->id,
-
-                        'imagen' =>
-                        $imagen,
-
-                    ]);
-                }
-
-                break;
-
-            case 'receta':
-
-                $datos = $pago->metadata;
-
-                Receta::create([
-                    'user_id' => $pago->user_id,
-                    'motivo' => $datos['motivo'] ?? '',
-                    'medicamento' => $datos['medicamento'] ?? '',
-                    'urgente' => $datos['urgente'] ?? false,
-                    'estado' => 'Pendiente',
-                ]);
-
-                break;
-        }
+            break;
     }
+}
+
+
 
     public function listarConsultas(Request $request)
     {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Certificado;
+use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
 
 class CertificadoController extends Controller
@@ -86,9 +87,27 @@ class CertificadoController extends Controller
 
         $certificado->estado = 'Listo';
 
-        $certificado->save();
 
-        return response()->json([
+$certificado->save();
+
+/*
+|--------------------------------------------------------------------------
+| PUSH AL PACIENTE
+|--------------------------------------------------------------------------
+*/
+
+PushNotificationService::send(
+
+    $certificado->user_id,
+
+    "Certificado disponible",
+
+    "Tu certificado médico ya está listo para descargar."
+
+);
+
+
+return  response()->json([
             'success' => true,
             'data' => $certificado,
         ]);

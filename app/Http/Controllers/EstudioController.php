@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Estudio;
 use App\Models\EstudioImagen;
+use App\Models\User;
+use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
 
 class EstudioController extends Controller
@@ -99,15 +101,40 @@ class EstudioController extends Controller
         $path = $request->file('resultado')
             ->store('resultados', 'public');
 
-        $estudio->resultado = $path;
-        $estudio->estado = "Listo";
+$estudio->resultado = $path;
+$estudio->estado = "Listo";
 
-        $estudio->save();
+$estudio->save();
 
-        return response()->json([
-            "success" => true,
-            "data" => $estudio
-        ]);
+/*
+|--------------------------------------------------------------------------
+| PUSH AL PACIENTE
+|--------------------------------------------------------------------------
+*/
+
+$paciente = User::find(
+    $estudio->user_id
+);
+
+if ($paciente) {
+
+    PushNotificationService::send(
+
+        $paciente->id,
+
+        "Resultado disponible",
+
+        "Tu estudio ya fue revisado y tiene un resultado disponible."
+
+    );
+
+}
+
+return response()->json([
+    "success" => true,
+    "data" => $estudio
+]);
+
     }
 
     public function show($id)

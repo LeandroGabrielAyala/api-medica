@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Receta;
+use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
 
 class RecetaController extends Controller
@@ -72,13 +73,26 @@ class RecetaController extends Controller
 
         $receta = Receta::findOrFail($id);
         $path = $request->file('archivo')->store('recetas', 'public');
-        $receta->archivo = $path;
-        $receta->estado = "Lista";
-        $receta->medico_id = $request->medico_id;
-        $receta->indicaciones = $request->indicaciones;
-        $receta->save();
+       
 
-        return response()->json([
+$receta->archivo = $path;
+$receta->estado = "Lista";
+$receta->medico_id = $request->medico_id;
+$receta->indicaciones = $request->indicaciones;
+
+$receta->save();
+
+PushNotificationService::send(
+
+    $receta->user_id,
+
+    "Nueva receta disponible",
+
+    "Tu receta médica ya fue emitida y está disponible para descargar."
+
+);
+
+return response()->json([
             "success" => true,
             "data" => $receta
         ]);
