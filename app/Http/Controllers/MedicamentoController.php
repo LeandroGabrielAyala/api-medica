@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Medicamento;
 use App\Models\SolicitudMedicamento;
+use App\Models\User;
+use App\Services\PushNotificationService;
 
 class MedicamentoController extends Controller
 {
@@ -30,6 +32,9 @@ class MedicamentoController extends Controller
     // ➕ SOLICITAR
     public function solicitar(Request $request)
     {
+
+\Log::info('SOLICITAR MEDICAMENTO', $request->all());
+
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'medicamento_id' => 'required|exists:medicamentos,id',
@@ -69,8 +74,22 @@ class MedicamentoController extends Controller
             'estado' => 'pendiente',
         ]);
 
-        // 🔥 DESCONTAR STOCK
-        $medicamento->decrement('stock');
+
+// 🔥 DESCONTAR STOCK
+$medicamento->decrement('stock');
+
+// 👨‍⚕️ NOTIFICAR MÉDICO
+
+$medico = User::where('role', 'medico')->first();
+
+if ($medico) {
+
+    PushNotificationService::send(
+        $medico->id,
+        'Nuevo medicamento solicitado',
+        'Un paciente solicitó un medicamento.'
+    );
+}
 
         return response()->json([
             "success" => true,
@@ -79,43 +98,74 @@ class MedicamentoController extends Controller
     }
 
     // 👨‍⚕️ APROBAR
-    public function aprobar($id)
-    {
-        $s = SolicitudMedicamento::find($id);
+public function aprobar($id)
+{
+    $s = SolicitudMedicamento::find($id);
 
-        if ($s) {
-            $s->estado = "aprobado";
-            $s->save();
-        }
+    if ($s) {
 
-        return response()->json(["success" => true]);
+        $s->estado = "aprobado";
+        $s->save();
+
+        PushNotificationService::send(
+            $s->user_id,
+            "Medicamento aprobado",
+            "Tu solicitud de medicamento fue aprobada.",
+"medicamentos"
+        );
     }
+
+    return response()->json([
+        "success" => true
+    ]);
+}
 
     // ❌ RECHAZAR
-    public function rechazar($id)
-    {
-        $s = SolicitudMedicamento::find($id);
+public function rechazar($id)
+{
+    $s = SolicitudMedicamento::find($id);
 
-        if ($s) {
-            $s->estado = "rechazado";
-            $s->save();
-        }
+    if ($s) {
 
-        return response()->json(["success" => true]);
+        $s->estado = "rechazado";
+        $s->save();
+
+        PushNotificationService::send(
+            $s->user_id,
+            "Medicamento rechazado",
+            "Tu solicitud de medicamento fue rechazada."
+        );
     }
 
-    // 📦 ENTREGAR
-    public function entregar($id)
-    {
-        $s = SolicitudMedicamento::find($id);
+    return response()->json([
+        "success" => true
+    ]);
+}
 
-        if ($s) {
-            $s->estado = "entregado";
-            $s->save();
-        }
+public function entregar($id)
+{
+    $s = SolicitudMedicamento::find($id);
 
-        return response()->json(["success" => true]);
+    if ($s) {
+
+        $s->estado = "entregado";
+        $s->save();
+
+        PushNotificationService::send(
+            $s->user_id,
+            "Medicamento entregado",
+            "Tu medicamento ya está disponible para retirar."
+        );
     }
+
+    return response()->json([
+        "success" => true
+    ]);
+}
+
+
+
+
 
     public function todasSolicitudes()
     {

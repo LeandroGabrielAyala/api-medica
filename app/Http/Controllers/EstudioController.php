@@ -123,9 +123,8 @@ if ($paciente) {
         $paciente->id,
 
         "Resultado disponible",
-
-        "Tu estudio ya fue revisado y tiene un resultado disponible."
-
+        "Tu estudio ya fue revisado y tiene un resultado disponible.",
+"estudios"
     );
 
 }

@@ -8,10 +8,11 @@ use Illuminate\Support\Facades\Log;
 
 class PushNotificationService
 {
-    public static function send(
-        int $userId,
-        string $title,
-        string $body
+public static function send(
+    int $userId,
+    string $title,
+    string $body,
+    string $channel = 'general'
     ): bool {
 
         $user = User::find($userId);
@@ -34,6 +35,7 @@ class PushNotificationService
                 'body' => $body,
                 'sound' => 'default',
                 'priority' => 'high',
+'channelId' => $channel,
             ]
         );
 

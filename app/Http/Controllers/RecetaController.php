@@ -87,8 +87,8 @@ PushNotificationService::send(
     $receta->user_id,
 
     "Nueva receta disponible",
-
-    "Tu receta médica ya fue emitida y está disponible para descargar."
+    "Tu receta médica ya fue emitida y está disponible para descargar.",
+"recetas"
 
 );
 

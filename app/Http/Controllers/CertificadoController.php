@@ -101,8 +101,8 @@ PushNotificationService::send(
     $certificado->user_id,
 
     "Certificado disponible",
-
-    "Tu certificado médico ya está listo para descargar."
+    "Tu certificado médico ya está listo para descargar.",
+"certificados"
 
 );
 

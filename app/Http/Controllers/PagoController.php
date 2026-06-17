@@ -146,7 +146,8 @@ Log::info('MP CONFIG', [
 PushNotificationService::send(
     $consulta->user_id,
     "Consulta atendida",
-    "Tu consulta fue atendida por un médico."
+    "Tu consulta fue atendida por un médico.",
+"consultas"
 );
             }
 
@@ -165,31 +166,46 @@ PushNotificationService::send(
         }
     }
 
-    public function marcarTurnoAtendido($id)
-    {
-        try {
 
-            $turno = Turno::find($id);
 
-            if ($turno) {
 
-                $turno->estado = "atendido";
 
-                $turno->save();
-            }
+public function marcarTurnoAtendido($id)
+{
+    try {
 
-            return response()->json([
-                "status" => "ok"
-            ]);
-        } catch (\Exception $e) {
+        $turno = Turno::find($id);
 
-            return response()->json([
+        if ($turno) {
 
-                "error" => $e->getMessage(),
+            $turno->estado = "atendido";
 
-            ], 500);
+            $turno->save();
+
+            PushNotificationService::send(
+                $turno->user_id,
+                "Turno atendido",
+                "Tu turno fue marcado como atendido.",
+"turnos"
+            );
         }
+
+        return response()->json([
+            "status" => "ok"
+        ]);
+
+    } catch (\Exception $e) {
+
+        return response()->json([
+
+            "error" => $e->getMessage(),
+
+        ], 500);
     }
+}
+
+
+
 
     public function tomarConsulta($id)
     {
@@ -583,27 +599,38 @@ private function procesarModulo($pago)
             // PANEL MÉDICO
             if ($request->modo === "medico") {
 
-                $turnos = $query
-
-                    ->orderBy('created_at', 'desc')
-
-                    ->get();
+$turnos = $query
+    ->orderByRaw("
+        CASE
+            WHEN estado = 'pendiente' THEN 1
+            WHEN estado = 'en_atencion' THEN 2
+            WHEN estado = 'atendido' THEN 3
+            ELSE 4
+        END
+    ")
+    ->orderBy('created_at', 'desc')
+    ->get();
 
                 return response()->json($turnos);
             }
 
             // PANEL PACIENTE
 
-            $turnos = $query
-
-                ->where(
-                    'user_id',
-                    $request->user_id
-                )
-
-                ->orderBy('created_at', 'desc')
-
-                ->get();
+$turnos = $query
+    ->where(
+        'user_id',
+        $request->user_id
+    )
+    ->orderByRaw("
+        CASE
+            WHEN estado = 'pendiente' THEN 1
+            WHEN estado = 'en_atencion' THEN 2
+            WHEN estado = 'atendido' THEN 3
+            ELSE 4
+        END
+    ")
+    ->orderBy('created_at', 'desc')
+    ->get();
 
             return response()->json($turnos);
         } catch (\Exception $e) {
