@@ -147,7 +147,10 @@ PushNotificationService::send(
     $consulta->user_id,
     "Consulta atendida",
     "Tu consulta fue atendida por un médico.",
-"consultas"
+"consultas",
+[
+        'screen' => 'consultas'
+    ]
 );
             }
 
@@ -186,7 +189,10 @@ public function marcarTurnoAtendido($id)
                 $turno->user_id,
                 "Turno atendido",
                 "Tu turno fue marcado como atendido.",
-"turnos"
+"turnos",
+[
+        'screen' => 'turnos'
+    ]
             );
         }
 
@@ -225,7 +231,11 @@ public function marcarTurnoAtendido($id)
 PushNotificationService::send(
     $consulta->user_id,
     "Consulta en atención",
-    "Un médico comenzó a atender tu consulta."
+    "Un médico comenzó a atender tu consulta.",
+"consultas",
+[
+        'screen' => 'consultas'
+    ]
 );
 
             return response()->json([
@@ -257,7 +267,11 @@ PushNotificationService::send(
 PushNotificationService::send(
     $consulta->user_id,
     "Consulta finalizada",
-    "Tu consulta fue finalizada por el médico."
+    "Tu consulta fue finalizada por el médico.",
+"consultas",
+[
+        'screen' => 'consultas'
+    ]
 );
 
             return response()->json([
@@ -423,7 +437,11 @@ private function procesarModulo($pago)
                 PushNotificationService::send(
                     $medico->id,
                     'Nuevo turno',
-                    'Hay una nueva solicitud de turno.'
+                    'Hay una nueva solicitud de turno.',
+"turnos",
+[
+        'screen' => 'turnos'
+    ]
                 );
             }
 
@@ -450,7 +468,11 @@ private function procesarModulo($pago)
                 PushNotificationService::send(
                     $medico->id,
                     'Nueva consulta',
-                    'Un paciente solicitó una consulta.'
+                    'Un paciente solicitó una consulta.',
+'consultas',
+[
+        'screen' => 'consultas'
+    ]
                 );
             }
 
@@ -472,7 +494,11 @@ private function procesarModulo($pago)
                 PushNotificationService::send(
                     $medico->id,
                     'Nuevo certificado',
-                    'Un paciente solicitó un certificado.'
+                    'Un paciente solicitó un certificado.',
+'certificados',
+[
+        'screen' => 'certificados'
+    ]
                 );
             }
 
@@ -508,6 +534,10 @@ private function procesarModulo($pago)
                     $medico->id,
                     'Nuevo estudio',
                     'Un paciente cargó un nuevo estudio para revisar.'
+'estudios',
+[
+        'screen' => 'estudios'
+    ]
                 );
             }
 
@@ -530,7 +560,11 @@ private function procesarModulo($pago)
                 PushNotificationService::send(
                     $medico->id,
                     'Nueva receta',
-                    'Un paciente solicitó una receta médica.'
+                    'Un paciente solicitó una receta médica.',
+'recetas',
+[
+        'screen' => 'recetas'
+    ]
                 );
             }
 

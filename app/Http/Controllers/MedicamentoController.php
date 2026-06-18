@@ -87,7 +87,10 @@ if ($medico) {
     PushNotificationService::send(
         $medico->id,
         'Nuevo medicamento solicitado',
-        'Un paciente solicitó un medicamento.'
+        'Un paciente solicitó un medicamento.',
+[
+        'screen' => 'medicamentos'
+    ]
     );
 }
 
@@ -111,7 +114,10 @@ public function aprobar($id)
             $s->user_id,
             "Medicamento aprobado",
             "Tu solicitud de medicamento fue aprobada.",
-"medicamentos"
+"medicamentos",
+[
+        'screen' => 'medicamentos'
+    ]
         );
     }
 

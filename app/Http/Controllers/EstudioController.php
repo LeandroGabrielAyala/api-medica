@@ -124,7 +124,10 @@ if ($paciente) {
 
         "Resultado disponible",
         "Tu estudio ya fue revisado y tiene un resultado disponible.",
-"estudios"
+	"estudios",
+	[
+	        'screen' => 'estudios'
+	]
     );
 
 }

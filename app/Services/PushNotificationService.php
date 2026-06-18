@@ -12,8 +12,9 @@ public static function send(
     int $userId,
     string $title,
     string $body,
-    string $channel = 'general'
-    ): bool {
+    string $channel = 'general',
+    array $data = []
+): bool {
 
         $user = User::find($userId);
 
@@ -35,7 +36,8 @@ public static function send(
                 'body' => $body,
                 'sound' => 'default',
                 'priority' => 'high',
-'channelId' => $channel,
+		'channelId' => $channel,
+		'data' => $data,
             ]
         );
 

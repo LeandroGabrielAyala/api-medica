@@ -88,7 +88,10 @@ PushNotificationService::send(
 
     "Nueva receta disponible",
     "Tu receta médica ya fue emitida y está disponible para descargar.",
-"recetas"
+"recetas",
+[
+        'screen' => 'recetas'
+    ]
 
 );
 
