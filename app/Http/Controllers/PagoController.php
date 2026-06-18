@@ -533,7 +533,7 @@ private function procesarModulo($pago)
                 PushNotificationService::send(
                     $medico->id,
                     'Nuevo estudio',
-                    'Un paciente cargó un nuevo estudio para revisar.'
+                    'Un paciente cargó un nuevo estudio para revisar.',
 'estudios',
 [
         'screen' => 'estudios'
