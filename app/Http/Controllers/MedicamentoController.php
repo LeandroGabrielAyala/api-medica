@@ -88,6 +88,7 @@ if ($medico) {
         $medico->id,
         'Nuevo medicamento solicitado',
         'Un paciente solicitó un medicamento.',
+'medicamentos',
 [
         'screen' => 'medicamentos'
     ]
@@ -139,7 +140,11 @@ public function rechazar($id)
         PushNotificationService::send(
             $s->user_id,
             "Medicamento rechazado",
-            "Tu solicitud de medicamento fue rechazada."
+            "Tu solicitud de medicamento fue rechazada.",
+"medicamentos",
+[
+        'screen' => 'medicamentos'
+    ]
         );
     }
 
@@ -160,7 +165,11 @@ public function entregar($id)
         PushNotificationService::send(
             $s->user_id,
             "Medicamento entregado",
-            "Tu medicamento ya está disponible para retirar."
+            "Tu medicamento ya está disponible para retirar.",
+"medicamentos",
+[
+        'screen' => 'medicamentos'
+    ]
         );
     }
 
