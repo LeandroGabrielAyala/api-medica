@@ -102,7 +102,10 @@ PushNotificationService::send(
 
     "Certificado disponible",
     "Tu certificado médico ya está listo para descargar.",
-"certificados"
+"certificados",
+    [
+        'screen' => 'certificados'
+    ]
 
 );
 
