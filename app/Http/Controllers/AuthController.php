@@ -53,6 +53,23 @@ class AuthController extends Controller
         }
     }
 
+    public function validarRegistro(Request $request)
+    {
+        return response()->json([
+
+            'dni_existe' => User::where(
+                'dni',
+                $request->dni
+            )->exists(),
+
+            'email_existe' => User::where(
+                'email',
+                $request->email
+            )->exists(),
+
+        ]);
+    }
+
     public function register(Request $request)
     {
         $request->validate([
@@ -95,7 +112,8 @@ class AuthController extends Controller
         ]);
     }
 
-    public function guardarDatosFiliatorios(Request $request) {
+    public function guardarDatosFiliatorios(Request $request)
+    {
         $user = User::where(
             'email',
             $request->email
@@ -120,4 +138,3 @@ class AuthController extends Controller
         ]);
     }
 }
-

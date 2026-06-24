@@ -11,6 +11,7 @@ use App\Http\Controllers\CertificadoController;
 // AUTHENTICATION
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register',[AuthController::class, 'register']);
+Route::post('/validar-registro', [AuthController::class, 'validarRegistro']);
 
 Route::post('/datos-filiatorios',[AuthController::class, 'guardarDatosFiliatorios']);
 
