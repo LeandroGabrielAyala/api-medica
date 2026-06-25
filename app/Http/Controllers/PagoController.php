@@ -73,8 +73,7 @@ Log::info('MP CONFIG', [
 
                 "external_reference" => $pago->external_reference,
 
-                "notification_url" =>
-                env('MP_WEBHOOK_URL'),
+                "notification_url" => config('services.mercadopago.webhook_url'),
 
                 "back_urls" => [
                     "success" => config('services.mercadopago.success_url'),

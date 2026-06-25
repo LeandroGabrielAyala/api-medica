@@ -41,6 +41,7 @@ return [
     'success_url' => env('MP_SUCCESS_URL'),
     'failure_url' => env('MP_FAILURE_URL'),
     'pending_url' => env('MP_PENDING_URL'),
+'webhook_url' => env('MP_WEBHOOK_URL'),
 ],
 
 ];
