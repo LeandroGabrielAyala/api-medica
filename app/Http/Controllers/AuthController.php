@@ -14,14 +14,14 @@ class AuthController extends Controller
 
             $request->validate([
 
-                'email' => 'required|email',
+                'dni' => 'required',
                 'password' => 'required'
 
             ]);
 
             $user = User::where(
-                'email',
-                $request->email
+                'dni',
+                $request->dni
             )->first();
 
             if (
