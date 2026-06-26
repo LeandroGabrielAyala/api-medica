@@ -139,12 +139,14 @@ return response()->json([
 
     }
 
-    public function show($id)
-    {
-        return response()->json(
-            Estudio::with('imagenes')->findOrFail($id)
-        );
-    }
+
+public function show($id)
+{
+    return response()->json(
+        Estudio::with('imagenes', 'user')
+            ->findOrFail($id)
+    );
+}
 
  public function uploadImagen(Request $request)
     {

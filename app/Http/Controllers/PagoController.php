@@ -801,17 +801,21 @@ public function webhook(Request $request)
             config('services.mercadopago.access_token')
         );
 
-        $paymentId = null;
+$paymentId = $request->input('data.id')
+    ?? $request->input('id')
+    ?? null;
 
-        if (isset($request->data['id'])) {
-            $paymentId = $request->data['id'];
-        }
+if (!$paymentId) {
 
-        if (!$paymentId) {
-            return response()->json([
-                'ok' => true
-            ]);
-        }
+    Log::warning(
+        'WEBHOOK SIN PAYMENT ID',
+        $request->all()
+    );
+
+    return response()->json([
+        'ok' => true
+    ]);
+}
 
         $client = new PaymentClient();
 
