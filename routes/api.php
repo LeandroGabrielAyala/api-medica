@@ -13,6 +13,11 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register',[AuthController::class, 'register']);
 Route::post('/validar-registro', [AuthController::class, 'validarRegistro']);
 
+Route::post(
+    '/cambiar-password',
+    [AuthController::class, 'cambiarPassword']
+);
+
 Route::post('/datos-filiatorios',[AuthController::class, 'guardarDatosFiliatorios']);
 
 

@@ -154,4 +154,53 @@ return response()->json([
             'success' => true
         ]);
     }
+
+
+public function cambiarPassword(Request $request)
+{
+    $request->validate([
+
+        'user_id' => 'required|exists:users,id',
+
+        'password_actual' => 'required',
+
+        'password_nueva' => 'required|min:6',
+
+    ]);
+
+    $user = User::find($request->user_id);
+
+    if (!Hash::check(
+        $request->password_actual,
+        $user->password
+    )) {
+
+        return response()->json([
+            'error' => 'La contraseña actual es incorrecta.'
+        ], 400);
+
+    }
+
+
+if ($request->password_actual === $request->password_nueva) {
+
+    return response()->json([
+        'error' => 'La nueva contraseña debe ser diferente a la actual.'
+    ], 400);
+
+}
+
+
+
+    $user->password =
+        Hash::make(
+            $request->password_nueva
+        );
+
+    $user->save();
+
+    return response()->json([
+        'success' => true
+    ]);
+}
 }
