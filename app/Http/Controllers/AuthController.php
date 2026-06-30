@@ -37,14 +37,31 @@ class AuthController extends Controller
                 ], 401);
             }
 
-            return response()->json([
+return response()->json([
 
-                "id" => $user->id,
-                "name" => $user->name,
-                "email" => $user->email,
-                "role" => $user->role
+    "id" => $user->id,
 
-            ]);
+    "name" => $user->name,
+
+    "apellido" => $user->apellido,
+
+    "email" => $user->email,
+
+    "dni" => $user->dni,
+
+    "telefono" => $user->telefono,
+
+    "direccion" => $user->direccion,
+
+    "created_at" => $user->created_at,
+
+    "role" => $user->role,
+
+]);
+
+
+
+
         } catch (\Exception $e) {
 
             return response()->json([
