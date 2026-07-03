@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description"
+    content="Atención Integral al Paciente: una app médica moderna para gestionar turnos, consultas, estudios, recetas, certificados y medicamentos.">
+  <title>AIP | Atención Integral al Paciente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <header class="site-header">
+    <a class="brand" href="#" aria-label="AIP inicio">
+      <img src="assets/logo-cropped.png" alt="AIP - Dr. Asis José Luis">
+    </a>
+
+    <nav class="site-nav" id="site-nav" aria-label="Navegación principal">
+      <a href="#caracteristicas">Características</a>
+      <a href="#seguridad">Seguridad</a>
+      <a href="#descargar">Descargar</a>
+    </nav>
+
+    <button class="menu-button" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="site-nav">
+      <span></span>
+      <span></span>
+    </button>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-shape hero-shape-one" aria-hidden="true"></div>
+      <div class="hero-shape hero-shape-two" aria-hidden="true"></div>
+
+      <div class="hero-content">
+        <p class="eyebrow">App médica para pacientes</p>
+        <h1>Atención Integral al Paciente</h1>
+        <p class="hero-copy">
+          Todo lo que necesitás para gestionar tu salud, en un solo lugar:
+          turnos, consultas, estudios, recetas, certificados y medicamentos.
+        </p>
+
+        <div class="download-actions" id="descargar" aria-label="Opciones de descarga">
+          <a class="button button-primary" href="#" aria-label="Descargar AIP para Android">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M7 4.5 5.4 2.9a.9.9 0 0 1 1.3-1.3l1.9 1.9a8 8 0 0 1 6.8 0l1.9-1.9a.9.9 0 0 1 1.3 1.3L17 4.5A7.8 7.8 0 0 1 20 10v1H4v-1a7.8 7.8 0 0 1 3-5.5ZM8 8a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm8 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM4 13h16v5.4a3.6 3.6 0 0 1-3.6 3.6H7.6A3.6 3.6 0 0 1 4 18.4V13Z" />
+            </svg>
+            Descargar para Android
+          </a>
+          <a class="button button-secondary" href="#" aria-label="Descargar AIP para iPhone mediante TestFlight">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M16.9 12.8c0-2.6 2.2-3.8 2.3-3.9-1.2-1.8-3.1-2-3.8-2-1.6-.2-3.1 1-3.9 1-.8 0-2-.9-3.3-.9-1.7 0-3.3 1-4.2 2.5-1.8 3.1-.5 7.8 1.3 10.3.9 1.2 1.9 2.6 3.2 2.5 1.3-.1 1.8-.8 3.3-.8 1.6 0 2 .8 3.4.8 1.4 0 2.3-1.3 3.2-2.5 1-1.4 1.4-2.8 1.4-2.9-.1 0-2.9-1.1-2.9-4.1ZM14.4 5.2c.7-.9 1.2-2.1 1.1-3.3-1.1.1-2.3.7-3.1 1.6-.7.8-1.3 2-1.1 3.2 1.1.1 2.3-.6 3.1-1.5Z" />
+            </svg>
+            Descargar para iPhone
+          </a>
+        </div>
+
+        <div class="trust-strip" aria-label="Beneficios principales">
+          <span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 2 4.5 5.3v5.8c0 4.8 3.2 9.3 7.5 10.9 4.3-1.6 7.5-6.1 7.5-10.9V5.3L12 2Zm3.7 8.3-4.3 4.3a1 1 0 0 1-1.4 0l-1.8-1.8a1 1 0 0 1 1.4-1.4l1.1 1.1 3.6-3.6a1 1 0 0 1 1.4 1.4Z" />
+            </svg>
+            Seguro
+          </span>
+          <span>Rapido</span>
+          <span>Siempre disponible</span>
+        </div>
+      </div>
+
+      <div class="hero-visual" aria-label="Mockup de la aplicación AIP en teléfono">
+        <div class="phone">
+          <div class="phone-speaker"></div>
+          <img class="app-shot" src="assets/app-screenshot.jpeg"
+            alt="Pantalla de la app Atención Médica con turnos y accesos rápidos">
+        </div>
+      </div>
+    </section>
+
+    <section class="features" id="caracteristicas" aria-labelledby="features-title">
+      <div class="section-heading">
+        <p class="eyebrow">Gestión simple</p>
+        <h2 id="features-title">Todo organizado para cuidar mejor tu salud</h2>
+      </div>
+
+      <div class="feature-grid">
+        <article class="feature-card">
+          <span class="feature-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h1V3a1 1 0 0 1 1-1Zm13 8H4v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9Z" />
+            </svg>
+          </span>
+          <h3>Turnos</h3>
+          <p>Consultá fechas, horarios y próximas visitas médicas desde el celular.</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M10 3a7 7 0 0 0-4.8 12.1L3.7 20a1 1 0 0 0 1.3 1.3l4.9-1.5A7 7 0 1 0 10 3Zm5 8h-3v3a1 1 0 0 1-2 0v-3H7a1 1 0 1 1 0-2h3V6a1 1 0 1 1 2 0v3h3a1 1 0 1 1 0 2Z" />
+            </svg>
+          </span>
+          <h3>Consultas</h3>
+          <p>Accedé a información relevante y canales de atención con claridad.</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M9 2h6a1 1 0 0 1 0 2h-1v4.1l5.6 9.7A2.8 2.8 0 0 1 17.2 22H6.8a2.8 2.8 0 0 1-2.4-4.2L10 8.1V4H9a1 1 0 0 1 0-2Zm2.7 7.6L9.2 14h5.6l-2.5-4.4A1 1 0 0 1 12 9V4h0v5c0 .2-.1.4-.3.6Z" />
+            </svg>
+          </span>
+          <h3>Estudios</h3>
+          <p>Mantené tus estudios y resultados disponibles cuando los necesites.</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M6 2h8l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm7 1.5V8h4.5L13 3.5ZM8 12a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2H8Zm0 4a1 1 0 1 0 0 2h5a1 1 0 1 0 0-2H8Z" />
+            </svg>
+          </span>
+          <h3>Recetas</h3>
+          <p>Centralizá recetas y documentos médicos en una experiencia ordenada.</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M7 2h7l5 5v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm6 2v4h4l-4-4Zm-4 8a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2H9Zm0 4a1 1 0 1 0 0 2h4a1 1 0 1 0 0-2H9Z" />
+            </svg>
+          </span>
+          <h3>Certificados</h3>
+          <p>Encontrá certificados rápidamente, sin perder tiempo buscando papeles.</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M8.5 4A4.5 4.5 0 0 1 13 8.5v7a4.5 4.5 0 1 1-9 0v-7A4.5 4.5 0 0 1 8.5 4Zm0 2A2.5 2.5 0 0 0 6 8.5V11h5V8.5A2.5 2.5 0 0 0 8.5 6ZM16 3a1 1 0 0 1 1 1v3h3a1 1 0 1 1 0 2h-3v3a1 1 0 1 1-2 0V9h-3a1 1 0 1 1 0-2h3V4a1 1 0 0 1 1-1Z" />
+            </svg>
+          </span>
+          <h3>Medicamentos</h3>
+          <p>Tené a mano el seguimiento de medicamentos y tratamientos indicados.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="privacy" id="seguridad" aria-labelledby="privacy-title">
+      <div class="privacy-content">
+        <p class="eyebrow">Seguridad y privacidad</p>
+        <h2 id="privacy-title">Información médica protegida con una experiencia confiable</h2>
+        <p>
+          AIP está pensada para ofrecer acceso rápido y ordenado a datos de salud,
+          con una interfaz clara, controles simples y un enfoque profesional para
+          acompañarte en cada gestión.
+        </p>
+      </div>
+      <div class="privacy-list" aria-label="Puntos de seguridad">
+        <span>Acceso personal</span>
+        <span>Datos organizados</span>
+        <span>Diseño claro</span>
+        <span>Soporte para pacientes</span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="brand footer-brand" href="#" aria-label="AIP inicio">
+      <img src="assets/logo-cropped.png" alt="AIP - Dr. Asis José Luis">
+    </a>
+    <nav aria-label="Enlaces legales">
+      <a href="https://api-medica.duckdns.org/privacy">Política de Privacidad</a>
+      <a href="https://api-medica.duckdns.org/terms">Términos</a>
+    </nav>
+  </footer>
+
+  <script>
+    const menuButton = document.querySelector(".menu-button");
+    const siteNav = document.querySelector(".site-nav");
+
+    if (menuButton && siteNav) {
+      menuButton.addEventListener("click", () => {
+        const isOpen = siteNav.classList.toggle("is-open");
+        menuButton.setAttribute("aria-expanded", String(isOpen));
+      });
+
+      siteNav.addEventListener("click", (event) => {
+        if (event.target instanceof HTMLAnchorElement) {
+          siteNav.classList.remove("is-open");
+          menuButton.setAttribute("aria-expanded", "false");
+        }
+      });
+    }
+
+  </script>
+</body>
+
+</html>
