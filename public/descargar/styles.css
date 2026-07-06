@@ -269,6 +269,7 @@ h1 {
 
 .trust-strip span + span::before {
   content: "";
+display: none;
   width: 5px;
   height: 5px;
   margin-right: 2px;
