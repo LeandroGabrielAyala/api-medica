@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use MercadoPago\Client\Payment\PaymentClient;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
@@ -36,6 +38,26 @@ class PagoController extends Controller
             ]);
 
             $tipo = $request->tipo;
+
+            if ($tipo === 'turno') {
+                $turnoValidation = $this->validarDatosTurno($request);
+
+                if ($turnoValidation) {
+                    return $turnoValidation;
+                }
+
+                if (
+                    $this->horarioTurnoOcupado(
+                        $request->input('metadata.fecha'),
+                        $request->input('metadata.hora')
+                    )
+                ) {
+                    return response()->json([
+                        'error' => 'El horario seleccionado ya no esta disponible.'
+                    ], 409);
+                }
+            }
+
             $monto = (float) $request->monto;
             $user = User::find($request->user_id);
             $externalReference = Str::uuid()->toString();
@@ -311,12 +333,14 @@ PushNotificationService::send(
     {
         try {
 
-            $pago = Pago::where(
-                'external_reference',
-                $request->external_reference
-            )->first();
+            return DB::transaction(function () use ($request) {
 
-            if (!$pago) {
+                $pago = Pago::where(
+                    'external_reference',
+                    $request->external_reference
+                )->lockForUpdate()->first();
+
+                if (!$pago) {
 
                 return response()->json([
                     "error" =>
@@ -325,9 +349,9 @@ PushNotificationService::send(
             }
 
             // ✅ evitar duplicados
-            if (
-                $pago->estado === "pagado"
-            ) {
+                if (
+                    $pago->estado === "pagado"
+                ) {
 
                 return response()->json([
                     "status" =>
@@ -336,16 +360,16 @@ PushNotificationService::send(
             }
 
             // ✅ aprobar
-            $pago->estado =
-                "pagado";
+                $pago->estado =
+                    "pagado";
 
-            $pago->fecha_pago =
-                now();
+                $pago->fecha_pago =
+                    now();
 
-            $pago->mp_payment_id =
-                "SIMULADO";
+                $pago->mp_payment_id =
+                    "SIMULADO";
 
-            $pago->save();
+                $pago->save();
 
             Log::info(
                 "PAGO SIMULADO",
@@ -390,6 +414,8 @@ PushNotificationService::send(
             return response()->json([
                 "success" => true
             ]);
+
+            });
         } catch (\Exception $e) {
 
             Log::error($e);
@@ -419,17 +445,47 @@ private function procesarModulo($pago)
 
         case 'turno':
 
-            Turno::create([
-                'user_id' => $pago->user_id,
+            $fecha = $pago->metadata['fecha'] ?? null;
+            $hora = $pago->metadata['hora'] ?? null;
+
+            if ($this->horarioTurnoOcupado($fecha, $hora)) {
+                Log::warning('TURNO NO CREADO: HORARIO OCUPADO', [
+                    'pago_id' => $pago->id,
+                    'external_reference' => $pago->external_reference,
+                    'fecha' => $fecha,
+                    'hora' => $hora,
+                ]);
+
+                break;
+            }
+
+            try {
+                Turno::create([
+                    'user_id' => $pago->user_id,
                 'tipo' => 'Turno Médico',
-                'monto' => $pago->monto,
-                'estado' => 'pendiente',
-                'metodo_pago' => 'mercadopago',
-                'external_reference' => $pago->external_reference,
-                'fecha_pago' => now(),
-                'fecha' => $pago->metadata['fecha'] ?? null,
-                'hora' => $pago->metadata['hora'] ?? null,
-            ]);
+                    'monto' => $pago->monto,
+                    'estado' => 'pendiente',
+                    'metodo_pago' => 'mercadopago',
+                    'external_reference' => $pago->external_reference,
+                    'fecha_pago' => now(),
+                    'fecha' => $fecha,
+                    'hora' => $hora,
+                ]);
+            } catch (QueryException $e) {
+                if (!$this->esViolacionUnique($e)) {
+                    throw $e;
+                }
+
+                Log::warning('TURNO NO CREADO: RESTRICCION UNIQUE', [
+                    'pago_id' => $pago->id,
+                    'external_reference' => $pago->external_reference,
+                    'fecha' => $fecha,
+                    'hora' => $hora,
+                    'error' => $e->getMessage(),
+                ]);
+
+                break;
+            }
 
             if ($medico) {
 
@@ -834,10 +890,12 @@ if (!$paymentId) {
             ]);
         }
 
+        return DB::transaction(function () use ($payment) {
+
         $pago = Pago::where(
             'external_reference',
             $payment->external_reference
-        )->first();
+        )->lockForUpdate()->first();
 
         if (!$pago) {
 
@@ -903,6 +961,8 @@ if (!$paymentId) {
         return response()->json([
             'ok' => true
         ]);
+
+        });
     } catch (\Exception $e) {
 
         Log::error(
@@ -920,6 +980,49 @@ if (!$paymentId) {
             'ok' => false
         ], 500);
     }
+}
+
+
+private function validarDatosTurno(Request $request)
+{
+    $validator = validator($request->all(), [
+        'metadata.fecha' => 'required|date_format:Y-m-d',
+        'metadata.hora' => [
+            'required',
+            'regex:/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/'
+        ],
+    ], [
+        'metadata.fecha.required' => 'La fecha del turno es obligatoria.',
+        'metadata.fecha.date_format' => 'La fecha del turno debe tener formato YYYY-MM-DD.',
+        'metadata.hora.required' => 'La hora del turno es obligatoria.',
+        'metadata.hora.regex' => 'La hora del turno debe tener formato HH:MM.',
+    ]);
+
+    if (!$validator->fails()) {
+        return null;
+    }
+
+    return response()->json([
+        'error' => 'Datos de turno invalidos.',
+        'errors' => $validator->errors(),
+    ], 422);
+}
+
+private function horarioTurnoOcupado($fecha, $hora): bool
+{
+    if (!$fecha || !$hora) {
+        return false;
+    }
+
+    return Turno::where('fecha', $fecha)
+        ->where('hora', $hora)
+        ->where('estado', '!=', 'cancelado')
+        ->exists();
+}
+
+private function esViolacionUnique(QueryException $e): bool
+{
+    return in_array($e->getCode(), ['23000', '23505'], true);
 }
 
 
