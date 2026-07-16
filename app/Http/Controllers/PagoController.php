@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
 use MercadoPago\MercadoPagoConfig;
+use MercadoPago\Exceptions\MPApiException;
 use MercadoPago\Client\Preference\PreferenceClient;
 use App\Models\Consulta;
 use App\Models\Notification;
@@ -73,7 +74,7 @@ class PagoController extends Controller
             $client = new PreferenceClient();
 
 Log::info('MP CONFIG', [
-    'token' => config('services.mercadopago.access_token'),
+    'token_configurado' => !empty(config('services.mercadopago.access_token')),
     'success' => config('services.mercadopago.success_url'),
     'failure' => config('services.mercadopago.failure_url'),
     'pending' => config('services.mercadopago.pending_url'),
@@ -119,6 +120,21 @@ Log::info('MP CONFIG', [
                 "init_point" => $preference->init_point,
                 "external_reference" => $externalReference
             ]);
+        } catch (MPApiException $e) {
+            $status = $e->getApiResponse()->getStatusCode();
+            $details = $e->getApiResponse()->getContent();
+
+            Log::error("ERROR API MP", [
+                'status' => $status,
+                'details' => $details,
+                'mensaje' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => $e->getMessage(),
+                'status' => $status,
+                'details' => $details,
+            ], 500);
         } catch (\Exception $e) {
 
             Log::error("ERROR MP", [
