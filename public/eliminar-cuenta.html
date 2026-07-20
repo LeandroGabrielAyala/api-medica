@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Solicitud de eliminación de cuenta y datos personales de AIP - Atención Integral."
+    >
+
+    <title>Eliminar cuenta | AIP - Atención Integral</title>
+
+    <style>
+        :root {
+            --primary: #4338ca;
+            --primary-dark: #312e81;
+            --background: #f6f7fb;
+            --card: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --danger: #dc2626;
+            --success: #15803d;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Arial,
+                sans-serif;
+            color: var(--text);
+            background:
+                linear-gradient(
+                    135deg,
+                    #eef2ff 0%,
+                    var(--background) 45%,
+                    #ffffff 100%
+                );
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .header {
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--primary-dark),
+                    var(--primary)
+                );
+            color: white;
+            padding: 42px 20px 72px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 76px;
+            height: 76px;
+            margin: 0 auto 18px;
+            border-radius: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            color: var(--primary);
+            font-size: 26px;
+            font-weight: 800;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: clamp(28px, 5vw, 42px);
+            line-height: 1.15;
+        }
+
+        .header p {
+            max-width: 720px;
+            margin: 14px auto 0;
+            color: rgba(255, 255, 255, 0.86);
+            font-size: 17px;
+        }
+
+        .container {
+            width: min(900px, calc(100% - 32px));
+            margin: -42px auto 48px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: clamp(24px, 5vw, 42px);
+            box-shadow:
+                0 20px 55px rgba(31, 41, 55, 0.12);
+        }
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-size: 26px;
+        }
+
+        h3 {
+            margin-top: 30px;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        p {
+            margin: 8px 0;
+        }
+
+        .notice {
+            margin: 22px 0;
+            padding: 18px;
+            border-left: 5px solid var(--primary);
+            border-radius: 12px;
+            background: #eef2ff;
+        }
+
+        ul {
+            padding-left: 22px;
+        }
+
+        li {
+            margin: 7px 0;
+        }
+
+        .steps {
+            counter-reset: step;
+            list-style: none;
+            padding: 0;
+            margin: 24px 0;
+        }
+
+        .steps li {
+            counter-increment: step;
+            position: relative;
+            padding: 17px 18px 17px 58px;
+            margin-bottom: 12px;
+            background: #f9fafb;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+        }
+
+        .steps li::before {
+            content: counter(step);
+            position: absolute;
+            left: 16px;
+            top: 15px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: white;
+            background: var(--primary);
+            font-weight: 700;
+        }
+
+        .email-box {
+            margin: 26px 0;
+            padding: 24px;
+            text-align: center;
+            border-radius: 18px;
+            border: 1px solid #c7d2fe;
+            background: #eef2ff;
+        }
+
+        .email-box strong {
+            display: block;
+            margin-bottom: 14px;
+            font-size: 18px;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 50px;
+            padding: 13px 22px;
+            border: 0;
+            border-radius: 13px;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+            background: var(--primary);
+            font-size: 16px;
+            font-weight: 700;
+            transition:
+                transform 0.2s ease,
+                background 0.2s ease,
+                box-shadow 0.2s ease;
+            box-shadow: 0 10px 22px rgba(67, 56, 202, 0.25);
+        }
+
+        .button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .button:focus-visible {
+            outline: 3px solid #a5b4fc;
+            outline-offset: 3px;
+        }
+
+        .copy-button {
+            margin-top: 12px;
+            border: 1px solid var(--border);
+            background: white;
+            color: var(--primary);
+            box-shadow: none;
+        }
+
+        .copy-button:hover {
+            background: #f8fafc;
+        }
+
+        .status {
+            min-height: 24px;
+            margin-top: 10px;
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .important {
+            color: var(--danger);
+            font-weight: 700;
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        footer {
+            margin-top: 26px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        @media (max-width: 600px) {
+            .header {
+                padding-top: 30px;
+                padding-bottom: 62px;
+            }
+
+            .container {
+                width: min(100% - 20px, 900px);
+            }
+
+            .card {
+                border-radius: 18px;
+            }
+
+            .button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="logo" aria-hidden="true">AIP</div>
+
+        <h1>Eliminación de cuenta</h1>
+
+        <p>
+            AIP - Atención Integral al Paciente
+        </p>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h2>Solicitar la eliminación de tu cuenta</h2>
+
+            <p>
+                Los usuarios de AIP pueden solicitar la eliminación
+                permanente de su cuenta y de los datos personales
+                asociados.
+            </p>
+
+            <div class="notice">
+                La solicitud debe enviarse desde el mismo correo
+                electrónico registrado en la aplicación, para que
+                podamos verificar la identidad del titular.
+            </div>
+
+            <h3>Cómo realizar la solicitud</h3>
+
+            <ol class="steps">
+                <li>
+                    Presioná el botón
+                    <strong>Solicitar eliminación</strong>.
+                </li>
+
+                <li>
+                    Se abrirá tu aplicación de correo electrónico
+                    con un mensaje preparado.
+                </li>
+
+                <li>
+                    Enviá el correo desde la dirección asociada
+                    a tu cuenta de AIP.
+                </li>
+
+                <li>
+                    Una vez verificada la identidad, procesaremos
+                    la eliminación de la cuenta y te notificaremos
+                    por correo electrónico.
+                </li>
+            </ol>
+
+            <div class="email-box">
+                <strong>Correo para solicitudes</strong>
+
+                <p id="supportEmail">
+                    lean.ayala4@gmail.com
+                </p>
+
+                <a
+                    id="deleteRequestButton"
+                    class="button"
+                    href="#"
+                >
+                    Solicitar eliminación
+                </a>
+
+                <button
+                    id="copyEmailButton"
+                    class="button copy-button"
+                    type="button"
+                >
+                    Copiar correo
+                </button>
+
+                <div
+                    id="copyStatus"
+                    class="status"
+                    role="status"
+                    aria-live="polite"
+                ></div>
+            </div>
+
+            <h3>Datos que se eliminarán</h3>
+
+            <ul>
+                <li>Datos de la cuenta y datos personales.</li>
+                <li>Datos filiatorios asociados al usuario.</li>
+                <li>Turnos y solicitudes médicas asociadas.</li>
+                <li>Consultas, recetas y certificados solicitados.</li>
+                <li>Estudios e imágenes cargadas por el usuario.</li>
+                <li>Solicitudes de medicamentos.</li>
+                <li>Tokens y datos técnicos vinculados a la cuenta.</li>
+            </ul>
+
+            <h3>Datos que podrían conservarse</h3>
+
+            <p>
+                Determinada información relacionada con pagos,
+                operaciones administrativas, prevención de fraude
+                u obligaciones legales podría conservarse durante
+                el plazo exigido por la normativa aplicable.
+            </p>
+
+            <p>
+                Estos datos no serán utilizados para finalidades
+                distintas de aquellas exigidas por la ley, seguridad
+                o cumplimiento de obligaciones.
+            </p>
+
+            <h3>Plazo estimado</h3>
+
+            <p>
+                Las solicitudes se procesarán dentro de un plazo
+                razonable una vez verificada la identidad del titular.
+            </p>
+
+            <p class="important">
+                La eliminación de la cuenta es permanente y no puede
+                deshacerse.
+            </p>
+
+            <p class="muted">
+                Última actualización: julio de 2026.
+            </p>
+        </section>
+
+        <footer>
+            © 2026 AIP - Atención Integral al Paciente
+        </footer>
+    </main>
+
+    <script>
+        const supportEmail = "lean.ayala4@gmail.com";
+
+        const subject =
+            "Solicitud de eliminación de cuenta AIP";
+
+        const body = [
+            "Hola,",
+            "",
+            "Solicito la eliminación permanente de mi cuenta de AIP y de los datos personales asociados.",
+            "",
+            "Correo registrado en AIP:",
+            "",
+            "Nombre completo:",
+            "",
+            "Entiendo que esta acción es permanente y no puede deshacerse.",
+            "",
+            "Saludos."
+        ].join("\n");
+
+        const deleteRequestButton =
+            document.getElementById("deleteRequestButton");
+
+        const copyEmailButton =
+            document.getElementById("copyEmailButton");
+
+        const copyStatus =
+            document.getElementById("copyStatus");
+
+        deleteRequestButton.href =
+            "mailto:" +
+            encodeURIComponent(supportEmail) +
+            "?subject=" +
+            encodeURIComponent(subject) +
+            "&body=" +
+            encodeURIComponent(body);
+
+        copyEmailButton.addEventListener(
+            "click",
+            async function () {
+                try {
+                    await navigator.clipboard.writeText(
+                        supportEmail
+                    );
+
+                    copyStatus.textContent =
+                        "Correo copiado correctamente.";
+                } catch (error) {
+                    copyStatus.textContent =
+                        "No se pudo copiar. Seleccioná el correo manualmente.";
+                }
+            }
+        );
+    </script>
+</body>
+</html>
