@@ -44,4 +44,8 @@ return [
 'webhook_url' => env('MP_WEBHOOK_URL'),
 ],
 
+'pagos' => [
+    'habilitados' => env('PAGOS_HABILITADOS', true),
+],
+
 ];

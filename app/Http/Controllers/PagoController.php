@@ -28,10 +28,6 @@ class PagoController extends Controller
     public function crearPago(Request $request)
     {
         try {
-            MercadoPagoConfig::setAccessToken(
-                config('services.mercadopago.access_token')
-            );
-
             $request->validate([
                 'tipo' => 'required|string',
                 'monto' => 'required|numeric',
@@ -39,6 +35,7 @@ class PagoController extends Controller
             ]);
 
             $tipo = $request->tipo;
+            $pagosHabilitados = (bool) config('services.pagos.habilitados', true);
 
             if ($tipo === 'turno') {
                 $turnoValidation = $this->validarDatosTurno($request);
@@ -59,7 +56,7 @@ class PagoController extends Controller
                 }
             }
 
-            $monto = (float) $request->monto;
+            $monto = $pagosHabilitados ? (float) $request->monto : 0;
             $user = User::find($request->user_id);
             $externalReference = Str::uuid()->toString();
             $pago = Pago::create([
@@ -68,8 +65,55 @@ class PagoController extends Controller
                 'monto' => $monto,
                 'estado' => 'pendiente',
                 'external_reference' => $externalReference,
-                'metadata' => $request->metadata ?? [],
+                'metadata' => $pagosHabilitados
+                    ? ($request->metadata ?? [])
+                    : array_merge(
+                        $request->metadata ?? [],
+                        [
+                            'modo_gratuito' => true,
+                            'monto_original' => (float) $request->monto,
+                        ]
+                    ),
             ]);
+
+            if (!$pagosHabilitados) {
+                Log::info('MODO GRATUITO: operacion iniciada', [
+                    'pago_id' => $pago->id,
+                    'modulo' => $pago->modulo,
+                    'external_reference' => $pago->external_reference,
+                ]);
+
+                $resultado = $this->finalizarOperacionAprobada(
+                    $pago->external_reference,
+                    null,
+                    'gratuito'
+                );
+
+                Log::info(
+                    $resultado['ya_procesado']
+                        ? 'MODO GRATUITO: operacion ya procesada'
+                        : 'MODO GRATUITO: operacion confirmada',
+                    [
+                        'pago_id' => $pago->id,
+                        'modulo' => $pago->modulo,
+                        'external_reference' => $pago->external_reference,
+                    ]
+                );
+
+                return response()->json([
+                    'success' => true,
+                    'modo_gratuito' => true,
+                    'estado' => 'aprobado',
+                    'external_reference' => $pago->external_reference,
+                    'modulo' => $pago->modulo,
+                    'redirect' => 'confirmacion',
+                    'ya_procesado' => $resultado['ya_procesado'],
+                ]);
+            }
+
+            MercadoPagoConfig::setAccessToken(
+                config('services.mercadopago.access_token')
+            );
 
             $client = new PreferenceClient();
 
@@ -137,10 +181,15 @@ Log::info('MP CONFIG', [
             ], 500);
         } catch (\Exception $e) {
 
-            Log::error("ERROR MP", [
-                'mensaje' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            Log::error(
+                (bool) config('services.pagos.habilitados', true)
+                    ? "ERROR MP"
+                    : "Error al confirmar operacion gratuita",
+                [
+                    'mensaje' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]
+            );
 
             return response()->json([
 
@@ -348,6 +397,18 @@ PushNotificationService::send(
     public function simularPago(Request $request)
     {
         try {
+            $resultado = $this->finalizarOperacionAprobada(
+                $request->external_reference,
+                'SIMULADO',
+                'mercadopago'
+            );
+
+            return response()->json([
+                "success" => true,
+                "status" => $resultado['ya_procesado']
+                    ? "ya procesado"
+                    : "procesado"
+            ]);
 
             return DB::transaction(function () use ($request) {
 
@@ -450,7 +511,60 @@ PushNotificationService::send(
 
 
 
-private function procesarModulo($pago)
+private function finalizarOperacionAprobada(
+    string $externalReference,
+    ?string $mpPaymentId = null,
+    string $metodoPago = 'mercadopago'
+): array {
+    return DB::transaction(function () use (
+        $externalReference,
+        $mpPaymentId,
+        $metodoPago
+    ) {
+        $pago = Pago::where(
+            'external_reference',
+            $externalReference
+        )->lockForUpdate()->first();
+
+        if (!$pago) {
+            throw new \RuntimeException('Pago no encontrado');
+        }
+
+        if ($pago->estado === 'pagado') {
+            return [
+                'pago' => $pago,
+                'ya_procesado' => true,
+            ];
+        }
+
+        $this->procesarModulo($pago, $metodoPago);
+
+        $pago->estado = 'pagado';
+        $pago->mp_payment_id = $mpPaymentId;
+        $pago->fecha_pago = now();
+        $pago->save();
+
+        $this->crearNotificacionOperacion($pago, $metodoPago);
+
+        Log::info(
+            $metodoPago === 'gratuito'
+                ? 'OPERACION GRATUITA APROBADA'
+                : 'PAGO APROBADO',
+            [
+                'pago_id' => $pago->id,
+                'modulo' => $pago->modulo,
+                'external_reference' => $pago->external_reference,
+            ]
+        );
+
+        return [
+            'pago' => $pago,
+            'ya_procesado' => false,
+        ];
+    });
+}
+
+private function procesarModulo($pago, string $metodoPago = 'mercadopago')
 {
     $medico = User::where(
         'role',
@@ -463,6 +577,10 @@ private function procesarModulo($pago)
 
             $fecha = $pago->metadata['fecha'] ?? null;
             $hora = $pago->metadata['hora'] ?? null;
+
+            if (Turno::where('external_reference', $pago->external_reference)->exists()) {
+                break;
+            }
 
             if ($this->horarioTurnoOcupado($fecha, $hora)) {
                 Log::warning('TURNO NO CREADO: HORARIO OCUPADO', [
@@ -481,7 +599,7 @@ private function procesarModulo($pago)
                 'tipo' => 'Turno Médico',
                     'monto' => $pago->monto,
                     'estado' => 'pendiente',
-                    'metodo_pago' => 'mercadopago',
+                    'metodo_pago' => $metodoPago,
                     'external_reference' => $pago->external_reference,
                     'fecha_pago' => now(),
                     'fecha' => $fecha,
@@ -529,7 +647,7 @@ private function procesarModulo($pago)
                 'tipo' => $pago->modulo,
                 'monto' => $pago->monto,
                 'estado' => 'pendiente',
-                'metodo_pago' => 'mercadopago',
+                'metodo_pago' => $metodoPago,
                 'external_reference' => $pago->external_reference,
                 'fecha_pago' => now(),
             ]);
@@ -641,6 +759,75 @@ private function procesarModulo($pago)
 
             break;
     }
+}
+
+
+private function crearNotificacionOperacion($pago, string $metodoPago): void
+{
+    if ($metodoPago !== 'gratuito') {
+        Notification::create([
+
+            'title' =>
+            'Nuevo pago aprobado',
+
+            'message' =>
+            'Se recibiÃ³ un pago de ' .
+            strtoupper($pago->modulo) .
+            ' por $' .
+            number_format(
+                $pago->monto,
+                2,
+                ',',
+                '.'
+            ),
+
+            'read' => false,
+        ]);
+
+        return;
+    }
+
+    $mensajes = [
+        'turno' => [
+            'title' => 'Nuevo turno confirmado',
+            'message' => 'Un paciente confirmo un nuevo turno.',
+        ],
+        'consulta-rapida' => [
+            'title' => 'Nueva consulta rapida',
+            'message' => 'Un paciente solicito una consulta rapida.',
+        ],
+        'consulta-urgente' => [
+            'title' => 'Nueva consulta urgente',
+            'message' => 'Un paciente solicito una consulta urgente.',
+        ],
+        'teleconsulta' => [
+            'title' => 'Nueva teleconsulta',
+            'message' => 'Un paciente solicito una teleconsulta.',
+        ],
+        'receta' => [
+            'title' => 'Nueva solicitud de receta',
+            'message' => 'Un paciente solicito una receta medica.',
+        ],
+        'certificado' => [
+            'title' => 'Nueva solicitud de certificado',
+            'message' => 'Un paciente solicito un certificado.',
+        ],
+        'estudio' => [
+            'title' => 'Nuevo estudio',
+            'message' => 'Un paciente cargo un estudio para revisar.',
+        ],
+    ];
+
+    $mensaje = $mensajes[$pago->modulo] ?? [
+        'title' => 'Nueva operacion confirmada',
+        'message' => 'Un paciente confirmo una nueva operacion.',
+    ];
+
+    Notification::create([
+        'title' => $mensaje['title'],
+        'message' => $mensaje['message'],
+        'read' => false,
+    ]);
 }
 
 
@@ -905,6 +1092,26 @@ if (!$paymentId) {
                 'ok' => true
             ]);
         }
+
+        try {
+            $this->finalizarOperacionAprobada(
+                $payment->external_reference,
+                (string) $payment->id,
+                'mercadopago'
+            );
+        } catch (\RuntimeException $e) {
+            Log::warning(
+                'PAGO NO ENCONTRADO',
+                [
+                    'external_reference' =>
+                    $payment->external_reference
+                ]
+            );
+        }
+
+        return response()->json([
+            'ok' => true
+        ]);
 
         return DB::transaction(function () use ($payment) {
 
